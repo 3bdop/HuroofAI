@@ -24,16 +24,16 @@ const Home = ({ navigation }) => {
             </View>
             <View style={{ justifyContent: "center", alignItems: "center", height: "20%" }}>
                 <View>
-                    <Text style={styles.boldText}>تعلم معنا <Text style={[styles.boldText, { color: '#CCC7FBFF' }]}>الاحرف</Text></Text>
+                    <Text style={styles.boldText}>تعلم معنا <Text style={[styles.boldText, { color: '#D1CDF4FF' }]}>الأحرف</Text></Text>
                     <Text style={styles.innerText}>
-                        تعلّم، استمتع، واكتشف مع اختبارات ممتعة!
+                        تعلّم، استمتع، واكتشف مع أختبارات ممتعة!
                     </Text>
                 </View>
             </View>
 
             <View style={{ height: "10%", alignItems: 'center', justifyContent: 'center' }}>
                 <Button
-                    title="هيا"
+                    title="هيا فلنبدأ"
                     titleStyle={{
                         color: "black",
                         fontWeight: "bold",
