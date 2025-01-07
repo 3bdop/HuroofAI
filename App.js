@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useState, useEffect } from 'react'
-import Letter from './components/letter';
+import Letter from './components/Letter';
 import Home from './components/Home';
 import SplashScreen from './components/SplashScreen';
 
