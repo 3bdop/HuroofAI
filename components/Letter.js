@@ -1,154 +1,139 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
-import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { Audio } from 'expo-av';
 
 const Letter = () => {
-    const [activeLetter, setActiveLetter] = useState(null); // State to track which letter is active
+    const [activeLetter, setActiveLetter] = useState(null);
+    const [sound, setSound] = useState();
+    
+    // Initialize audio on component mount
+    useEffect(() => {
+        const initAudio = async () => {
+            try {
+                await Audio.setAudioModeAsync({
+                    allowsRecordingIOS: false,
+                    playsInSilentModeIOS: true,
+                    shouldDuckAndroid: true,
+                    playThroughEarpieceAndroid: false,
+                    staysActiveInBackground: false,
+                });
+            } catch (error) {
+                console.error('Error initializing audio:', error);
+            }
+        };
+        
+        initAudio();
+    }, []);
 
-    const letters = ['أ', 'ب', 'ت', 'ث']; // Array of Arabic letters
+    // Cleanup function for audio
+    useEffect(() => {
+        return sound
+            ? () => {
+                sound.unloadAsync();
+            }
+            : undefined;
+    }, [sound]);
+
+    const letters = [
+        { char: 'أ', audioFile: require('../assets/audio/alif.mp3') },
+        { char: 'ب', audioFile: require('../assets/audio/alif.mp3') },
+        { char: 'ت', audioFile: require('../assets/audio/alif.mp3') },
+        { char: 'ث', audioFile: require('../assets/audio/alif.mp3') },
+    ];
+
+    const playSound = async (audioFile) => {
+        try {
+            if (sound) {
+                await sound.unloadAsync();
+            }
+
+            console.log('Loading sound...');
+            const { sound: newSound } = await Audio.Sound.createAsync(
+                audioFile,
+                { shouldPlay: true }
+            );
+            setSound(newSound);
+            console.log('Playing sound...');
+            await newSound.playAsync();
+        } catch (error) {
+            console.error('Error playing sound:', error);
+            Alert.alert("Error playing sound")
+        }
+    };
 
     const handleLetterPress = (letter) => {
-        // Toggle the active letter
-        setActiveLetter(activeLetter === letter ? null : letter);
+        setActiveLetter(activeLetter === letter.char ? null : letter.char);
     };
+
     return (
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-            {letters.map((letter, index) => (
-                <View key={index} style={styles.letterContainer}>
-                    {/* Letter Button */}
-                    <TouchableOpacity
-                        style={styles.letterButton}
-                        onPress={() => handleLetterPress(letter)}
-                    >
-                        <Text style={styles.letterText}>{letter}</Text>
-                    </TouchableOpacity>
+        <LinearGradient
+            colors={['#573499FF', "#9C85C6FF", '#2C2356']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradient}>
+            <ScrollView contentContainerStyle={styles.scrollContainer}>
+                <View style={styles.cardsContainer}>
+                    {letters.map((letter, index) => (
+                        <View key={index} style={styles.letterWrapper}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.letterButton,
+                                    activeLetter === letter.char && styles.activeLetter
+                                ]}
+                                onPress={() => handleLetterPress(letter)}
+                            >
+                                <Text style={styles.letterText}>{letter.char}</Text>
+                            </TouchableOpacity>
 
-                    {/* Buttons Below the Letter */}
-                    {activeLetter === letter && (
-                        <View style={styles.buttonsContainer}>
-                            <TouchableOpacity style={styles.actionButton}>
-                                <Text style={styles.actionButtonText}>Button 1</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.actionButton}>
-                                <Text style={styles.actionButtonText}>Button 2</Text>
-                            </TouchableOpacity>
+                            {activeLetter === letter.char && (
+                                <View style={styles.buttonsContainer}>
+                                    <TouchableOpacity 
+                                        style={styles.actionButton}
+                                        onPress={() => playSound(letter.audioFile)}
+                                    >
+                                        <Icon name="volume-high" size={20} color="#573499" />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={[styles.actionButton, styles.micButton]}>
+                                        <Icon name="mic" size={20} color="#573499" />
+                                    </TouchableOpacity>
+                                </View>
+                            )}
                         </View>
-                    )}
+                    ))}
                 </View>
-            ))}
-        </ScrollView>
-        // <View style={styles.container}>
-
-        // </View>
-        // <LinearGradient
-        //     colors={['#573499FF', "#9C85C6FF", '#2C2356']}
-        //     start={{ x: 0, y: 0 }} // Top-left corner
-        //     end={{ x: 1, y: 1 }}   // Bottom-right corner
-        //     style={styles.container}
-        // >
-        //     {/* Letter Image */}
-        //     <View style={styles.imageContainer}>
-        //         <Image
-        //             source={require('../assets/icon.png')} //..................
-        //             style={styles.letterImage}
-        //             resizeMode="contain"
-        //         />
-        //     </View>
-
-        //     {/* Interactive Buttons */}
-        //     <View style={styles.buttonsContainer}>
-        //         <TouchableOpacity style={styles.circleButton}>
-        //             <Icon name="volume-high" size={24} color="#FFF" />
-        //         </TouchableOpacity>
-
-        //         <TouchableOpacity style={styles.circleButton}>
-        //             <Icon name="mic" size={24} color="#FFF" />
-        //         </TouchableOpacity>
-        //     </View>
-        // </LinearGradient>
+            </ScrollView>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    gradient: {
         flex: 1,
-        backgroundColor: 'snow'
-    },
-    header: {
-        height: 60,
-        paddingHorizontal: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    backButton: {
-        padding: 8,
-    },
-    imageContainer: {
-        height: Dimensions.get('window').height * 0.5,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    letterImage: {
-        width: '80%',
-        height: '80%',
-    },
-    buttonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-        gap: 100,
-    },
-    circleButton: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: '#FF6B6B',
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
     },
     scrollContainer: {
-        flex: 1,
+        flexGrow: 1,
         justifyContent: 'center',
-        padding: 20,
-        // backgroundColor: 'snow',
+        paddingVertical: 20,
     },
-    letterContainer: {
-        marginBottom: 20,
+    cardsContainer: {
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    letterWrapper: {
+        marginBottom: 15,
+        alignItems: 'center',
+        width: '100%',
+        maxWidth: 300,
     },
     letterButton: {
-        backgroundColor: '#6C63FF',
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 10,
+        backgroundColor: '#8A4FFF',
+        paddingVertical: 12,
+        paddingHorizontal: 25,
+        borderRadius: 15,
+        width: '100%',
         alignItems: 'center',
-        justifyContent: 'center',
-    },
-    letterText: {
-        fontSize: 24,
-        color: '#FFF',
-        fontWeight: 'bold',
-    },
-    buttonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginTop: 10,
-    },
-    actionButton: {
-        backgroundColor: '#FF6B6B',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-        elevation: 3,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -156,11 +141,46 @@ const styles = StyleSheet.create({
         },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
+        elevation: 5,
     },
-    actionButtonText: {
+    activeLetter: {
+        backgroundColor: '#7B3FEE',
+        transform: [{scale: 1.02}],
+    },
+    letterText: {
+        fontSize: 28,
         color: '#FFF',
         fontWeight: 'bold',
+        textShadowColor: 'rgba(0, 0, 0, 0.2)',
+        textShadowOffset: {width: 1, height: 1},
+        textShadowRadius: 3,
     },
+    buttonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 10,
+        width: '100%',
+        gap: 120,
+    },
+    actionButton: {
+        backgroundColor: '#fff',
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 3,
+    },
+    micButton: {
+        backgroundColor: '#fff',
+    }
 });
 
 export default Letter;
