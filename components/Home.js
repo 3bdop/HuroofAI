@@ -30,15 +30,15 @@ const Home = ({ navigation }) => {
 
     return (
         <LinearGradient
-            colors={['#573499FF', "#9C85C6FF", '#2C2356']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            colors={['#221C3EFF', "#9C85C6FF", '#573499FF']}
+            // start={{ x: 1, y: 0 }}
+            // end={{ x: 0, y: 1 }}
             style={{ flex: 1, justifyContent: 'center', alignItems: 'center', }}>
-            <Animated.View 
-                style={{ 
-                    width: screenWidth, 
-                    height: "50%", 
-                    justifyContent: 'center', 
+            <Animated.View
+                style={{
+                    width: screenWidth,
+                    height: "50%",
+                    justifyContent: 'center',
                     alignItems: 'center',
                     transform: [{ translateY: bounceAnim }] // Apply the animation
                 }}
