@@ -92,6 +92,7 @@ const Letter = () => {
             char: "س",
             audioFiles: [
                 require("../assets/audio/siin.mp3"),
+                require("../uploads/siinOut.m4a"),
                 "../uploads/siinOut.m4a",
             ],
         },
@@ -100,6 +101,7 @@ const Letter = () => {
             char: "ش",
             audioFiles: [
                 require("../assets/audio/shiin.mp3"),
+                require("../uploads/shiinOut.m4a"),
                 "../uploads/shiinOut.m4a",
             ],
         },
@@ -108,6 +110,7 @@ const Letter = () => {
             char: "ر",
             audioFiles: [
                 require("../assets/audio/ra.mp3"),
+                require("../uploads/raOut.m4a"),
                 "../uploads/raOut.m4a",
             ],
         },
@@ -116,6 +119,7 @@ const Letter = () => {
             char: "ك",
             audioFiles: [
                 require("../assets/audio/kaf.mp3"),
+                require("../uploads/kafOut.m4a"),
                 "../uploads/kafOut.m4a",
             ],
         },
@@ -123,31 +127,30 @@ const Letter = () => {
 
 
 
-
     const playSound = async (audioFile) => {
         try {
             if (sound) {
                 await sound.unloadAsync();
-            }
-            console.log(audioFile);
-
-
-            let soundObject;
-            if (typeof audioFile === 'string') {
-                soundObject = { uri: audioFile };
-            } else {
-                soundObject = audioFile;
+                setSound(null);
             }
 
-            const { sound: newSound } = await Audio.Sound.createAsync(
-                soundObject,
-                { shouldPlay: true }
-            );
+            console.log("Audio file:", audioFile);
+
+            const soundObject =
+                typeof audioFile === "string" ? { uri: audioFile } : audioFile;
+
+            const { sound: newSound } = await Audio.Sound.createAsync(soundObject, {
+                shouldPlay: true,
+            });
+
             setSound(newSound);
             await newSound.playAsync();
         } catch (error) {
-            console.error('Error playing sound:', error);
-            Alert.alert("Error playing sound");
+            console.error("Error playing sound:", error.message, error);
+            Alert.alert(
+                "Error playing sound",
+                "Could not play the sound. Please check the file or server configuration."
+            );
         }
     };
 
@@ -319,8 +322,12 @@ const Letter = () => {
                                             <Icon name="volume-high" size={30} color="#573499" />
                                         </TouchableOpacity>
                                         <TouchableOpacity style={[styles.actionButton, styles.micButton]}
-                                            onPress={recording ? () => stopRecording(letter.audioFiles[1]) : startRecording}>
-                                            <Icon name="mic" size={30} color={recording ? "#3D9E34FF" : "#573499"} />
+                                            onPress={recording ? () => stopRecording(letter.audioFiles[2]) : startRecording}>
+                                            {/* <Icon name="mic" size={30} color={recording ? "#3D9E34FF" : "#573499"} /> */}
+                                            {recording ?
+                                                <Icon name="stop" size={30} color="#DC2626FF" /> :
+                                                <Icon name="mic" size={30} color="#573499" />
+                                            }
                                         </TouchableOpacity>
                                         <TouchableOpacity
                                             style={styles.actionButton}
