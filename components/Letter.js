@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, FlatList, Dimensions, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, Animated, Dimensions, Image } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -6,6 +6,7 @@ import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
 import { Button, ScreenHeight, ScreenWidth } from '@rneui/base';
 import * as FileSystem from 'expo-file-system';
+import { ImageBackground } from 'react-native';
 
 // import ImageItems from './ImageItems'
 
@@ -17,7 +18,26 @@ const Letter = () => {
     const [activeLetter, setActiveLetter] = useState(null);
     const [sound, setSound] = useState(null);
     const [recording, setRecording] = useState(null);
+    const bounceAnim = useRef(new Animated.Value(0)).current;
 
+    useEffect(() => {
+        // Create the bouncing animation sequence
+        const bounceAnimation = Animated.sequence([
+            Animated.timing(bounceAnim, {
+                toValue: -20, // Move up by 15 units
+                duration: 2000, // 2 seconds up
+                useNativeDriver: true,
+            }),
+            Animated.timing(bounceAnim, {
+                toValue: 0, // Move back to original position
+                duration: 2000, // 2 seconds down
+                useNativeDriver: true,
+            })
+        ]);
+
+        // Create an infinite loop of the animation
+        Animated.loop(bounceAnimation).start();
+    }, []);
     const [imageList] = useState([
         {
             id: '1',
@@ -38,21 +58,16 @@ const Letter = () => {
     ]);
 
 
-
-    // const [recordings, setRecordings] = useState({});
-    // const [recordingsF, setRecordingsF] = useState({});
-
     // Initialize audio on component mount
     useEffect(() => {
         const initAudio = async () => {
             try {
                 await Audio.setAudioModeAsync({
-                    // allowsRecordingIOS: true,
                     playsInSilentModeIOS: true,
                     shouldDuckAndroid: true,
                     playThroughEarpieceAndroid: false,
                     staysActiveInBackground: false,
-                    allowsRecordingIOS: false //this will make the sound come from the speaker
+                    allowsRecordingIOS: false
                 });
             } catch (error) {
                 console.error('Error initializing audio:', error);
@@ -70,12 +85,40 @@ const Letter = () => {
             }
             : undefined;
     }, [sound]);
+    // console.log(require('../uploads/kafOut.m4a'))
 
     const letters = [
-        { char: 'س', audioFile: require('../assets/audio/siin.mp3') },
-        { char: 'ش', audioFile: require('../assets/audio/shiin.mp3') },
-        { char: 'ر', audioFile: require('../assets/audio/ra.mp3') },
-        { char: 'ك', audioFile: require('../assets/audio/kaf.mp3') },
+        {
+            char: "س",
+            audioFiles: [
+                require("../assets/audio/siin.mp3"),
+                "../uploads/siinOut.m4a",
+            ],
+        },
+
+        {
+            char: "ش",
+            audioFiles: [
+                require("../assets/audio/shiin.mp3"),
+                "../uploads/shiinOut.m4a",
+            ],
+        },
+
+        {
+            char: "ر",
+            audioFiles: [
+                require("../assets/audio/ra.mp3"),
+                "../uploads/raOut.m4a",
+            ],
+        },
+
+        {
+            char: "ك",
+            audioFiles: [
+                require("../assets/audio/kaf.mp3"),
+                "../uploads/kafOut.m4a",
+            ],
+        },
     ];
 
 
@@ -86,9 +129,18 @@ const Letter = () => {
             if (sound) {
                 await sound.unloadAsync();
             }
+            console.log(audioFile);
+
+
+            let soundObject;
+            if (typeof audioFile === 'string') {
+                soundObject = { uri: audioFile };
+            } else {
+                soundObject = audioFile;
+            }
 
             const { sound: newSound } = await Audio.Sound.createAsync(
-                audioFile,
+                soundObject,
                 { shouldPlay: true }
             );
             setSound(newSound);
@@ -137,24 +189,23 @@ const Letter = () => {
         }
     }
 
-    const uploadRecording = async (uri) => {
+    const uploadRecording = async (uri, dest) => {
         const apiUrl = 'http://192.168.18.13:3000/upload'; // Replace with your server URL
         const fileType = 'audio/m4a'; // Adjust the file type if necessary
 
         const formData = new FormData();
+        console.log(dest);
         formData.append('file', {
             uri,
             name: 'recording.m4a',
             type: fileType,
         });
+        formData.append('filename', dest);
 
         try {
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                body: formData,
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+                body: formData, // Let the browser handle the Content-Type
             });
 
             if (response.ok) {
@@ -166,21 +217,28 @@ const Letter = () => {
             console.error('Error uploading file:', error);
         }
     };
+
+
     // Call this function after recording is stopped
-    const stopRecording = async () => {
+    const stopRecording = async (audioFile) => {
         try {
+            // Stop and unload the recording
             await recording.stopAndUnloadAsync();
-            const path = recording.getURI();
-            console.log('Recording stopped and stored at', path);
+            const uri = recording.getURI();
+            console.log("Recording stopped and stored at", audioFile);
 
             // Upload the recorded file to the server
-            await uploadRecording(path);
-            console.log(recording)
-            setRecording(null)
+            console.log(audioFile);
+            await uploadRecording(uri, audioFile);
+            console.log(uri);
+
+            // Clear the recording state AFTER upload
+            setRecording(null);
         } catch (error) {
-            console.error('Error stopping recording:', error);
+            console.error("Error stopping recording:", error);
         }
     };
+
     // async function stopRecording() {
     //     console.log('Stopping recording..');
     //     setRecording(undefined);
@@ -218,6 +276,9 @@ const Letter = () => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.gradient}>
+                {/* <Animated.ImageBackground
+                    style={{ flex: 1, resizeMode: 'cover', width: ScreenWidth, height: ScreenHeight }}
+                    source={require('../assets/GroupS.png')} > */}
 
                 <ScrollView
                     horizontal
@@ -253,16 +314,19 @@ const Letter = () => {
                                     <View style={styles.buttonsContainer}>
                                         <TouchableOpacity
                                             style={styles.actionButton}
-                                            onPress={() => playSound(letter.audioFile)}
+                                            onPress={() => playSound(letter.audioFiles[0])}
                                         >
                                             <Icon name="volume-high" size={30} color="#573499" />
                                         </TouchableOpacity>
-                                        <TouchableOpacity style={[styles.actionButton, styles.micButton]} onPress={recording ? stopRecording : startRecording}>
+                                        <TouchableOpacity style={[styles.actionButton, styles.micButton]}
+                                            onPress={recording ? () => stopRecording(letter.audioFiles[1]) : startRecording}>
                                             <Icon name="mic" size={30} color={recording ? "#3D9E34FF" : "#573499"} />
                                         </TouchableOpacity>
                                         <TouchableOpacity
                                             style={styles.actionButton}
-                                            onPress={playRecordedAudio}
+                                            // onPress={playRecordedAudio}  // TODO: Use PlaySound() instead
+
+                                            onPress={() => playSound(letter.audioFiles[1])}
                                         >
                                             <Icon name="play" size={30} color="#573499" />
                                         </TouchableOpacity>
@@ -276,6 +340,8 @@ const Letter = () => {
                         </View>
                     </View>
                 </ScrollView>
+                {/* </Animated.ImageBackground> */}
+
             </LinearGradient>
             <LottieView
                 ref={confettiRef}
