@@ -2,6 +2,8 @@ import { StyleSheet, Text, View, Dimensions, ImageBackground, Animated } from 'r
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react'
 import { Image, Input, Button } from "@rneui/themed";
+import * as Haptics from 'expo-haptics';
+
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
 
@@ -77,7 +79,8 @@ const Home = ({ navigation }) => {
                     containerStyle={{
                         width: screenWidth * 0.75,
                     }}
-                    onPress={() => navigation.navigate("Letter")}
+                    onPress={() => [navigation.navigate("Letter"), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium
+                    )]}
                 />
             </View>
         </LinearGradient>
