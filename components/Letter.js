@@ -5,13 +5,18 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
 import { Button, ScreenHeight, ScreenWidth } from '@rneui/base';
+import * as FileSystem from 'expo-file-system';
+
 // import ImageItems from './ImageItems'
 
 
 const Letter = () => {
+    const [permissionResponse, requestPermission] = Audio.usePermissions();
+    const confettiRef = useRef();
+    const confettiRefFalse = useRef();
     const [activeLetter, setActiveLetter] = useState(null);
-    const [sound, setSound] = useState();
-    const [recording, setRecording] = useState();
+    const [sound, setSound] = useState(null);
+    const [recording, setRecording] = useState(null);
 
     const [imageList] = useState([
         {
@@ -34,21 +39,20 @@ const Letter = () => {
 
 
 
-    const confettiRef = useRef();
-    const [recordings, setRecordings] = useState({});
-    const confettiRefFalse = useRef();
-    const [recordingsF, setRecordingsF] = useState({});
+    // const [recordings, setRecordings] = useState({});
+    // const [recordingsF, setRecordingsF] = useState({});
 
     // Initialize audio on component mount
     useEffect(() => {
         const initAudio = async () => {
             try {
                 await Audio.setAudioModeAsync({
-                    allowsRecordingIOS: true,
+                    // allowsRecordingIOS: true,
                     playsInSilentModeIOS: true,
                     shouldDuckAndroid: true,
                     playThroughEarpieceAndroid: false,
                     staysActiveInBackground: false,
+                    allowsRecordingIOS: false //this will make the sound come from the speaker
                 });
             } catch (error) {
                 console.error('Error initializing audio:', error);
@@ -68,52 +72,14 @@ const Letter = () => {
     }, [sound]);
 
     const letters = [
-        { char: 'أ', audioFile: require('../assets/audio/alif.mp3') },
-        { char: 'ب', audioFile: require('../assets/audio/ba.mp3') },
-        { char: 'ت', audioFile: require('../assets/audio/ta.mp3') },
-        { char: 'ث', audioFile: require('../assets/audio/tha.mp3') },
+        { char: 'س', audioFile: require('../assets/audio/siin.mp3') },
+        { char: 'ش', audioFile: require('../assets/audio/shiin.mp3') },
+        { char: 'ر', audioFile: require('../assets/audio/ra.mp3') },
+        { char: 'ك', audioFile: require('../assets/audio/kaf.mp3') },
     ];
 
-    const startRecording = async (letter) => {
-        try {
-            const perm = await Audio.requestPermissionsAsync();
-            if (perm.status === "granted") {
-                await Audio.setAudioModeAsync({
-                    allowsRecordingIOS: true,
-                    playsInSilentModeIOS: true
-                });
-                const { recording } = await Audio.Recording.createAsync(
-                    Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
-                );
-                setRecording(recording);
-            }
-        } catch (error) {
-            console.error('Failed to start recording:', error);
-            Alert.alert('Error', 'Failed to start recording');
-        }
-    };
 
-    const stopRecording = async (letter) => {
-        if (!recording) return;
 
-        try {
-            await recording.stopAndUnloadAsync();
-            const { sound: recordedSound, status } = await recording.createNewLoadedSoundAsync();
-
-            setRecordings(prev => ({
-                ...prev,
-                [letter]: {
-                    sound: recordedSound,
-                    file: recording.getURI()
-                }
-            }));
-
-            setRecording(undefined);
-        } catch (error) {
-            console.error('Failed to stop recording:', error);
-            Alert.alert('Error', 'Failed to stop recording');
-        }
-    };
 
     const playSound = async (audioFile) => {
         try {
@@ -133,17 +99,6 @@ const Letter = () => {
         }
     };
 
-    const playRecording = async (letter) => {
-        try {
-            const recordingData = recordings[letter];
-            if (recordingData) {
-                await recordingData.sound.replayAsync();
-            }
-        } catch (error) {
-            console.error('Error playing recording:', error);
-            Alert.alert("Error playing recording");
-        }
-    };
 
     const handleLetterPress = (letter) => {
         setActiveLetter(activeLetter === letter.char ? null : letter.char);
@@ -159,6 +114,103 @@ const Letter = () => {
             confettiRefFalse.current.play(0)
         }
     }
+    const [recordedURI, setRecordedURI] = useState(null); // Store the URI of the recorded audio
+
+    async function startRecording() {
+        try {
+            if (permissionResponse.status !== 'granted') {
+                console.log('Requesting permission..');
+                await requestPermission();
+            }
+            await Audio.setAudioModeAsync({
+                allowsRecordingIOS: true,
+                playsInSilentModeIOS: true,
+            });
+
+            console.log('Starting recording..');
+            const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY
+            );
+            setRecording(recording);
+            console.log('Recording started');
+        } catch (err) {
+            console.error('Failed to start recording', err);
+        }
+    }
+
+    const uploadRecording = async (uri) => {
+        const apiUrl = 'http://192.168.18.13:3000/upload'; // Replace with your server URL
+        const fileType = 'audio/m4a'; // Adjust the file type if necessary
+
+        const formData = new FormData();
+        formData.append('file', {
+            uri,
+            name: 'recording.m4a',
+            type: fileType,
+        });
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            if (response.ok) {
+                console.log('File uploaded successfully');
+            } else {
+                console.error('Failed to upload file');
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+        }
+    };
+    // Call this function after recording is stopped
+    const stopRecording = async () => {
+        try {
+            await recording.stopAndUnloadAsync();
+            const path = recording.getURI();
+            console.log('Recording stopped and stored at', path);
+
+            // Upload the recorded file to the server
+            await uploadRecording(path);
+            console.log(recording)
+            setRecording(null)
+        } catch (error) {
+            console.error('Error stopping recording:', error);
+        }
+    };
+    // async function stopRecording() {
+    //     console.log('Stopping recording..');
+    //     setRecording(undefined);
+    //     await recording.stopAndUnloadAsync();
+    //     await Audio.setAudioModeAsync({
+    //         allowsRecordingIOS: false,
+    //     });
+    //     const uri = recording.getURI();
+    //     setRecordedURI(uri); // Save the URI
+    //     console.log('Recording stopped and stored at', uri);
+    // }
+
+    const playRecordedAudio = async () => {
+        if (!recordedURI) {
+            Alert.alert("No recording found", "Please record your voice first.");
+            return;
+        }
+
+        try {
+            const { sound: playbackSound } = await Audio.Sound.createAsync(
+                { uri: recordedURI },
+                { shouldPlay: true }
+            );
+            setSound(playbackSound); // Save the playback sound instance for cleanup
+            await playbackSound.playAsync();
+        } catch (error) {
+            console.error('Error playing recorded audio:', error);
+            Alert.alert("Error", "Could not play the recorded audio.");
+        }
+    };
     return (
         <View style={styles.container}>
             <LinearGradient
@@ -203,10 +255,16 @@ const Letter = () => {
                                             style={styles.actionButton}
                                             onPress={() => playSound(letter.audioFile)}
                                         >
-                                            <Icon name="volume-high" size={20} color="#573499" />
+                                            <Icon name="volume-high" size={30} color="#573499" />
                                         </TouchableOpacity>
-                                        <TouchableOpacity style={[styles.actionButton, styles.micButton]}>
-                                            <Icon name="mic" size={20} color="#573499" />
+                                        <TouchableOpacity style={[styles.actionButton, styles.micButton]} onPress={recording ? stopRecording : startRecording}>
+                                            <Icon name="mic" size={30} color={recording ? "#3D9E34FF" : "#573499"} />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={styles.actionButton}
+                                            onPress={playRecordedAudio}
+                                        >
+                                            <Icon name="play" size={30} color="#573499" />
                                         </TouchableOpacity>
                                     </View>
                                 )}
@@ -276,7 +334,7 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     activeLetter: {
-        backgroundColor: '#7B3FEE',
+        backgroundColor: '#6734C6FF',
         transform: [{ scale: 1.02 }],
     },
     letterText: {
@@ -346,7 +404,8 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
         backgroundColor: '#E71D73',
         borderRadius: 15,
-        // padding: 10,
+        padding: 5,
+        paddingTop: 10,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
