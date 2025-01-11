@@ -79,7 +79,8 @@ const Home = ({ navigation }) => {
                     containerStyle={{
                         width: screenWidth * 0.75,
                     }}
-                    onPress={() => [navigation.navigate("Letter"), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium
+                    onPress={() => [navigation.navigate("Letter"),
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium
                     )]}
                 />
             </View>
