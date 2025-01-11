@@ -5,8 +5,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
 import { Button, ScreenHeight, ScreenWidth } from '@rneui/base';
-import * as FileSystem from 'expo-file-system';
-import { ImageBackground } from 'react-native';
+
 
 // import ImageItems from './ImageItems'
 
@@ -19,7 +18,7 @@ const Letter = () => {
     const [sound, setSound] = useState(null);
     const [recording, setRecording] = useState(null);
     const bounceAnim = useRef(new Animated.Value(0)).current;
-    // const [activePlay, setActivePlay] = useState(false)
+    const [isPlaying, setIsPlaying] = useState(false);
 
     useEffect(() => {
         // Create the bouncing animation sequence
@@ -132,22 +131,38 @@ const Letter = () => {
 
     const playSound = async (audioFile) => {
         try {
+            // Pause or resume the currently playing sound
             if (sound) {
-                await sound.unloadAsync();
-                setSound(null);
+                const status = await sound.getStatusAsync();
+                if (status.isPlaying) {
+                    await sound.pauseAsync();
+                    setIsPlaying(false);
+                } else {
+                    await sound.playAsync();
+                    setIsPlaying(true);
+                }
+            } else {
+                // Load and play a new sound
+                console.log("Audio file:", audioFile);
+
+                const soundObject =
+                    typeof audioFile === "string" ? { uri: audioFile } : audioFile;
+
+                const { sound: newSound } = await Audio.Sound.createAsync(soundObject, {
+                    shouldPlay: true,
+                });
+
+                setSound(newSound);
+                setIsPlaying(true);
+
+                // Listen to the playback status to reset `isPlaying` when the sound finishes
+                newSound.setOnPlaybackStatusUpdate((status) => {
+                    if (status.didJustFinish) {
+                        setIsPlaying(false);
+                        setSound(null); // Unload the sound
+                    }
+                });
             }
-
-            console.log("Audio file:", audioFile);
-
-            const soundObject =
-                typeof audioFile === "string" ? { uri: audioFile } : audioFile;
-
-            const { sound: newSound } = await Audio.Sound.createAsync(soundObject, {
-                shouldPlay: true,
-            });
-
-            setSound(newSound);
-            await newSound.playAsync();
         } catch (error) {
             console.error("Error playing sound:", error.message, error);
             Alert.alert(
@@ -156,6 +171,7 @@ const Letter = () => {
             );
         }
     };
+
 
 
     const handleLetterPress = (letter) => {
@@ -257,24 +273,24 @@ const Letter = () => {
     //     console.log('Recording stopped and stored at', uri);
     // }
 
-    const playRecordedAudio = async () => {
-        if (!recordedURI) {
-            Alert.alert("No recording found", "Please record your voice first.");
-            return;
-        }
+    // const playRecordedAudio = async () => {
+    //     if (!recordedURI) {
+    //         Alert.alert("No recording found", "Please record your voice first.");
+    //         return;
+    //     }
 
-        try {
-            const { sound: playbackSound } = await Audio.Sound.createAsync(
-                { uri: recordedURI },
-                { shouldPlay: true }
-            );
-            setSound(playbackSound); // Save the playback sound instance for cleanup
-            await playbackSound.playAsync();
-        } catch (error) {
-            console.error('Error playing recorded audio:', error);
-            Alert.alert("Error", "Could not play the recorded audio.");
-        }
-    };
+    //     try {
+    //         const { sound: playbackSound } = await Audio.Sound.createAsync(
+    //             { uri: recordedURI },
+    //             { shouldPlay: true }
+    //         );
+    //         setSound(playbackSound); // Save the playback sound instance for cleanup
+    //         await playbackSound.playAsync();
+    //     } catch (error) {
+    //         console.error('Error playing recorded audio:', error);
+    //         Alert.alert("Error", "Could not play the recorded audio.");
+    //     }
+    // };
     return (
         <View style={styles.container}>
             <LinearGradient
@@ -336,7 +352,7 @@ const Letter = () => {
 
                                             onPress={() => playSound(letter.audioFiles[1])}
                                         >
-                                            <Icon name="play" size={30} color="#573499" />
+                                            <Icon name={isPlaying ? "pause" : "play"} size={30} color={isPlaying ? "#3D9E34FF" : "#573499"} />
                                         </TouchableOpacity>
                                     </View>
                                 )}
