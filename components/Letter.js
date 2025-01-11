@@ -19,6 +19,7 @@ const Letter = () => {
     const [sound, setSound] = useState(null);
     const [recording, setRecording] = useState(null);
     const bounceAnim = useRef(new Animated.Value(0)).current;
+    // const [activePlay, setActivePlay] = useState(false)
 
     useEffect(() => {
         // Create the bouncing animation sequence
@@ -41,19 +42,19 @@ const Letter = () => {
     const [imageList] = useState([
         {
             id: '1',
-            image: require('../assets/letters/alif.png')
+            image: require('../assets/letters/siin.png')
         },
         {
             id: '2',
-            image: require('../assets/letters/ba.png')
+            image: require('../assets/letters/shiin.png')
         },
         {
             id: '3',
-            image: require('../assets/letters/ta.png')
+            image: require('../assets/letters/ra.png')
         },
         {
             id: '4',
-            image: require('../assets/letters/tha.png')
+            image: require('../assets/letters/kaaf.png')
         }
     ]);
 
@@ -86,6 +87,8 @@ const Letter = () => {
             : undefined;
     }, [sound]);
     // console.log(require('../uploads/kafOut.m4a'))
+
+    //TODO MultiSession, should config it later
 
     const letters = [
         {
@@ -193,7 +196,7 @@ const Letter = () => {
     }
 
     const uploadRecording = async (uri, dest) => {
-        const apiUrl = 'http://192.168.18.13:3000/upload'; // Replace with your server URL
+        const apiUrl = 'http://192.168.118.72:3000/upload'; //! This must be the IP of expo Metro(Changes if you'er on different internet)
         const fileType = 'audio/m4a'; // Adjust the file type if necessary
 
         const formData = new FormData();
@@ -279,9 +282,7 @@ const Letter = () => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.gradient}>
-                {/* <Animated.ImageBackground
-                    style={{ flex: 1, resizeMode: 'cover', width: ScreenWidth, height: ScreenHeight }}
-                    source={require('../assets/GroupS.png')} > */}
+
 
                 <ScrollView
                     horizontal
@@ -347,7 +348,6 @@ const Letter = () => {
                         </View>
                     </View>
                 </ScrollView>
-                {/* </Animated.ImageBackground> */}
 
             </LinearGradient>
             <LottieView
@@ -472,27 +472,28 @@ const styles = StyleSheet.create({
 
     },
     imageWrapper: {
-        width: ScreenWidth * 0.4,
+        width: ScreenWidth * 0.45,
         height: ScreenHeight * 0.2,
         marginHorizontal: 10,
-        backgroundColor: '#E71D73',
+        backgroundColor: 'snow',
         borderRadius: 15,
-        padding: 5,
-        paddingTop: 10,
+        // padding: 5,
+        // paddingTop: 10,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#000',
+        shadowColor: '#000000',
         shadowOffset: {
             width: 0,
             height: 2,
         },
-        shadowOpacity: 0.25,
+        shadowOpacity: 0.5,
         shadowRadius: 3.84,
         elevation: 5,
     },
     image: {
         width: '100%',
         height: '100%',
+        borderRadius: 20
     },
 });
 
