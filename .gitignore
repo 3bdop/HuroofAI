@@ -40,3 +40,5 @@ uploads/*
 
 # dev machine config
 config/env.js
+
+.env
