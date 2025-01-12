@@ -20,7 +20,7 @@ const Letter = () => {
 
     const SERVER_PORT = ENV.SERVER_PORT;
     const SERVER_IP = ENV.SERVER_IP;
-    const serverPath = 'upload';
+    const SERVER_PATH_UPLOAD = 'upload';
     const fileType = 'audio/m4a';
 
     useEffect(() => {
@@ -214,26 +214,35 @@ const Letter = () => {
         }
     }
 
-    const uploadRecording = async (uri, dest) => {
+    const validateServerConfig = () => {
         if (!SERVER_IP) {
-            console.error('IP address not set');
-            return;
+            throw new Error('Server IP address not set');
         }
-        console.log(SERVER_IP)
-        const apiUrl = `http://${SERVER_IP}:${SERVER_PORT}/${serverPath}`;
 
-        console.log(apiUrl);
+        if (!SERVER_PORT) {
+            throw new Error('Server Port not set');
+        }
 
-        const formData = new FormData();
-        console.log(dest);
-        formData.append('file', {
-            uri,
-            name: 'recording.m4a',
-            type: fileType,
-        });
-        formData.append('filename', dest);
-
+        if (!SERVER_PATH_UPLOAD) {
+            throw new Error('Server Upload Record Path not set');
+        }
+    }
+    const uploadRecording = async (uri, dest) => {
         try {
+            validateServerConfig();
+            const apiUrl = `http://${SERVER_IP}:${SERVER_PORT}/${SERVER_PATH_UPLOAD}`;
+
+            console.log(apiUrl);
+
+            const formData = new FormData();
+            console.log(dest);
+            formData.append('file', {
+                uri,
+                name: 'recording.m4a',
+                type: fileType,
+            });
+            formData.append('filename', dest);
+
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 body: formData, // Let the browser handle the Content-Type
