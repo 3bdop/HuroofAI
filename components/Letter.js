@@ -1,14 +1,12 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, Animated, Dimensions, Image } from 'react-native';
+import { Text, View, TouchableOpacity, ScrollView, Alert, Animated, Image } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
-import { Button, ScreenHeight, ScreenWidth } from '@rneui/base';
-
-
-// import ImageItems from './ImageItems'
-
+import { Button } from '@rneui/base';
+import { ENV } from '../config/env.js';
+import styles from './LetterStyles';
 
 const Letter = () => {
     const [permissionResponse, requestPermission] = Audio.usePermissions();
@@ -19,6 +17,11 @@ const Letter = () => {
     const [recording, setRecording] = useState(null);
     const bounceAnim = useRef(new Animated.Value(0)).current;
     const [isPlaying, setIsPlaying] = useState(false);
+
+    const SERVER_PORT = ENV.SERVER_PORT;
+    const SERVER_IP = ENV.SERVER_IP;
+    const serverPath = 'upload';
+    const fileType = 'audio/m4a';
 
     useEffect(() => {
         // Create the bouncing animation sequence
@@ -212,8 +215,14 @@ const Letter = () => {
     }
 
     const uploadRecording = async (uri, dest) => {
-        const apiUrl = 'http://192.168.118.72:3000/upload'; //! This must be the IP of expo Metro(Changes if you'er on different internet)
-        const fileType = 'audio/m4a'; // Adjust the file type if necessary
+        if (!SERVER_IP) {
+            console.error('IP address not set');
+            return;
+        }
+        console.log(SERVER_IP)
+        const apiUrl = `http://${SERVER_IP}:${SERVER_PORT}/${serverPath}`;
+
+        console.log(apiUrl);
 
         const formData = new FormData();
         console.log(dest);
@@ -261,36 +270,6 @@ const Letter = () => {
         }
     };
 
-    // async function stopRecording() {
-    //     console.log('Stopping recording..');
-    //     setRecording(undefined);
-    //     await recording.stopAndUnloadAsync();
-    //     await Audio.setAudioModeAsync({
-    //         allowsRecordingIOS: false,
-    //     });
-    //     const uri = recording.getURI();
-    //     setRecordedURI(uri); // Save the URI
-    //     console.log('Recording stopped and stored at', uri);
-    // }
-
-    // const playRecordedAudio = async () => {
-    //     if (!recordedURI) {
-    //         Alert.alert("No recording found", "Please record your voice first.");
-    //         return;
-    //     }
-
-    //     try {
-    //         const { sound: playbackSound } = await Audio.Sound.createAsync(
-    //             { uri: recordedURI },
-    //             { shouldPlay: true }
-    //         );
-    //         setSound(playbackSound); // Save the playback sound instance for cleanup
-    //         await playbackSound.playAsync();
-    //     } catch (error) {
-    //         console.error('Error playing recorded audio:', error);
-    //         Alert.alert("Error", "Could not play the recorded audio.");
-    //     }
-    // };
     return (
         <View style={styles.container}>
             <LinearGradient
@@ -383,135 +362,6 @@ const Letter = () => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    gradient: {
-        flex: 1,
-    },
-    scrollContainer: {
-        // flexGrow: 1,
-        justifyContent: 'center',
-        // paddingVertical: 20,
-    },
-    cardsContainer: {
-        alignItems: 'center',
-        paddingHorizontal: 20,
-    },
-    letterWrapper: {
-        marginBottom: 15,
-        alignItems: 'center',
-        width: '100%',
-        maxWidth: 300,
-    },
-    letterButton: {
-        backgroundColor: '#8A4FFF',
-        paddingVertical: 12,
-        paddingHorizontal: 25,
-        borderRadius: 15,
-        width: '100%',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    activeLetter: {
-        backgroundColor: '#6734C6FF',
-        transform: [{ scale: 1.02 }],
-    },
-    letterText: {
-        fontSize: 28,
-        color: '#FFF',
-        fontWeight: 'bold',
-        textShadowColor: 'rgba(0, 0, 0, 0.2)',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 3,
-    },
-    buttonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 10,
-        width: '100%',
-        gap: 120,
-    },
-    actionButton: {
-        backgroundColor: '#fff',
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 3,
-    },
-    micButton: {
-        backgroundColor: '#fff',
-    },
-    lottie: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 999,
-        elevation: 999,
-        backgroundColor: 'transparent',
-        pointerEvents: 'none'
-    },
-    lottieF: {
-        width: ScreenWidth * 0.2,
-        height: ScreenHeight * 0.1,
-        position: 'absolute',
-        alignSelf: 'center',
-        zIndex: 999,
-        elevation: 999,
-        backgroundColor: 'transparent',
-        pointerEvents: 'none'
-    },
-    imageContainer: {
-        padding: 10,
-        paddingHorizontal: 20,
-        alignItems: 'center',
-
-    },
-    imageWrapper: {
-        width: ScreenWidth * 0.45,
-        height: ScreenHeight * 0.2,
-        marginHorizontal: 10,
-        backgroundColor: 'snow',
-        borderRadius: 15,
-        // padding: 5,
-        // paddingTop: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.5,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    image: {
-        width: '100%',
-        height: '100%',
-        borderRadius: 20
-    },
-});
 
 
 export default Letter;
