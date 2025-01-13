@@ -53,11 +53,11 @@ const styles = StyleSheet.create({
         textShadowRadius: 3,
     },
     buttonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 10,
+        // flexDirection: 'row',
+        // justifyContent: 'center',
+        // alignItems: 'center',
+        marginTop: '5%',
         width: '100%',
-        gap: 120,
     },
     actionButton: {
         backgroundColor: '#fff',

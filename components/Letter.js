@@ -320,28 +320,31 @@ const Letter = () => {
 
                                 {activeLetter === letter.char && (
                                     <View style={styles.buttonsContainer}>
-                                        <TouchableOpacity
-                                            style={styles.actionButton}
-                                            onPress={() => playSound(letter.audioFiles[0])}
-                                        >
-                                            <Icon name="volume-high" size={30} color="#573499" />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity style={[styles.actionButton, styles.micButton]}
-                                            onPress={recording ? () => stopRecording(letter.audioFiles[2]) : startRecording}>
-                                            {/* <Icon name="mic" size={30} color={recording ? "#3D9E34FF" : "#573499"} /> */}
-                                            {recording ?
-                                                <Icon name="stop" size={30} color="#DC2626FF" /> :
-                                                <Icon name="mic" size={30} color="#573499" />
-                                            }
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={styles.actionButton}
-                                            // onPress={playRecordedAudio}  // TODO: Use PlaySound() instead
+                                        <View style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
 
-                                            onPress={() => playSound(letter.audioFiles[1])}
-                                        >
-                                            <Icon name={isPlaying ? "pause" : "play"} size={30} color={isPlaying ? "#3D9E34FF" : "#573499"} />
-                                        </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.actionButton}
+                                                onPress={() => playSound(letter.audioFiles[0])}
+                                            >
+                                                <Icon name="volume-high" size={30} color="#573499" />
+                                            </TouchableOpacity>
+                                            <TouchableOpacity style={[styles.actionButton, styles.micButton]}
+                                                onPress={recording ? () => stopRecording(letter.audioFiles[2]) : startRecording}>
+                                                {/* <Icon name="mic" size={30} color={recording ? "#3D9E34FF" : "#573499"} /> */}
+                                                {recording ?
+                                                    <Icon name="stop" size={30} color="#DC2626FF" /> :
+                                                    <Icon name="mic" size={30} color="#573499" />
+                                                }
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.actionButton}
+                                                // onPress={playRecordedAudio}  // TODO: Use PlaySound() instead
+
+                                                onPress={() => playSound(letter.audioFiles[1])}
+                                            >
+                                                <Icon name={isPlaying ? "pause" : "play"} size={30} color={isPlaying ? "#3D9E34FF" : "#573499"} />
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
                                 )}
                             </View>
