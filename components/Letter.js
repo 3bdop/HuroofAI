@@ -97,7 +97,7 @@ const Letter = () => {
             char: "س",
             audioFiles: [
                 require("../assets/audio/siin.mp3"),
-                require("../uploads/siinOut.m4a"),
+                require("../uploads/siinOut.mp3"),
                 "../uploads/siinOut.m4a",
             ],
         },
@@ -106,7 +106,7 @@ const Letter = () => {
             char: "ش",
             audioFiles: [
                 require("../assets/audio/shiin.mp3"),
-                require("../uploads/shiinOut.m4a"),
+                require("../uploads/shiinOut.mp3"),
                 "../uploads/shiinOut.m4a",
             ],
         },
@@ -115,7 +115,7 @@ const Letter = () => {
             char: "ر",
             audioFiles: [
                 require("../assets/audio/ra.mp3"),
-                require("../uploads/raOut.m4a"),
+                require("../uploads/raOut.mp3"),
                 "../uploads/raOut.m4a",
             ],
         },
@@ -124,7 +124,7 @@ const Letter = () => {
             char: "ك",
             audioFiles: [
                 require("../assets/audio/kaf.mp3"),
-                require("../uploads/kafOut.m4a"),
+                require("../uploads/kafOut.mp3"),
                 "../uploads/kafOut.m4a",
             ],
         },
