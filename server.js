@@ -10,6 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 const upload = multer({ storage: multer.memoryStorage() }); // Store files in memory
+const { exec } = require("child_process");
 
 app.post("/upload", upload.single("file"), async (req, res) => {
     try {
@@ -68,5 +69,17 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 // Start the server
 const port = 3000;
 app.listen(port, () => {
+    exec("./ensure_audio_file_dependencies", (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error executing script: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`Script stderr: ${stderr}`);
+            return;
+        }
+        console.log(`Script stdout: ${stdout}`);
+    });
+
     console.log(`Server running at http://localhost:${port}`);
 });
