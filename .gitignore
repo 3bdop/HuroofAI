@@ -41,4 +41,6 @@ uploads/*
 # dev machine config
 config/env.js
 
-.env
+.env/
+.venv/
+model/pretrained/
