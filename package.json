@@ -24,6 +24,7 @@
     "expo-splash-screen": "~0.29.20",
     "expo-status-bar": "~2.0.1",
     "express": "^4.21.2",
+    "fluent-ffmpeg": "^2.1.3",
     "fs": "^0.0.1-security",
     "lottie-react-native": "7.1.0",
     "moehe-app": "file:",
