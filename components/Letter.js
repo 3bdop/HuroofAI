@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, ScrollView, Alert, Animated, Image } from 'react-native';
+import { Text, View, TouchableOpacity, ScrollView, Alert, Image, Modal, Animated, Easing  } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -14,14 +14,19 @@ const Letter = () => {
     const confettiRefFalse = useRef();
     const [activeLetter, setActiveLetter] = useState(null);
     const [sound, setSound] = useState(null);
-    const [recording, setRecording] = useState(null);
     const bounceAnim = useRef(new Animated.Value(0)).current;
     const [isPlaying, setIsPlaying] = useState(false);
+    const [showStopButton, setShowStopButton] = useState(false);
+    
 
     const SERVER_PORT = ENV.SERVER_PORT;
     const SERVER_IP = ENV.SERVER_IP;
     const SERVER_PATH_UPLOAD = 'upload';
     const fileType = 'audio/m4a';
+    const [isCountdownVisible, setIsCountdownVisible] = useState(false);
+    const [countdownText, setCountdownText] = useState('3');
+    const textOpacity = useRef(new Animated.Value(0)).current;
+    const textScale = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
         // Create the bouncing animation sequence
@@ -191,7 +196,7 @@ const Letter = () => {
             confettiRefFalse.current.play(0)
         }
     }
-    const [recordedURI, setRecordedURI] = useState(null); // Store the URI of the recorded audio
+    const [recordedURI, setRecordedURI] = useState(null);
 
     async function startRecording() {
         try {
@@ -207,12 +212,73 @@ const Letter = () => {
             console.log('Starting recording..');
             const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY
             );
-            setRecording(recording);
             console.log('Recording started');
         } catch (err) {
             console.error('Failed to start recording', err);
         }
     }
+    
+    const runCountdownAnimation = () => {
+        const countdown = ['3', '2', '1', 'Recording...'];
+        let index = 0;
+    
+        const animateNumber = () => {
+            if (index < countdown.length) {
+                setCountdownText(countdown[index]);
+                
+                textOpacity.setValue(0);
+                textScale.setValue(1);
+    
+                Animated.parallel([
+                    Animated.timing(textOpacity, {
+                        toValue: 1,
+                        duration: 500,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(textScale, {
+                        toValue: 1.2,
+                        duration: 500,
+                        useNativeDriver: true,
+                    })
+                ]).start(() => {
+                    if (index === countdown.length - 1) {
+                        setShowStopButton(true);
+                        startRecording(); 
+                    } else {
+                        Animated.parallel([
+                            Animated.timing(textOpacity, {
+                                toValue: 0,
+                                duration: 500,
+                                useNativeDriver: true,
+                            }),
+                            Animated.timing(textScale, {
+                                toValue: 0.8,
+                                duration: 500,
+                                useNativeDriver: true,
+                            })
+                        ]).start(() => {
+                            index++;
+                            animateNumber();
+                        });
+                    }
+                });
+            }
+        };
+    
+        animateNumber();
+    };
+
+    const startRecordingWithCountdown = () => {
+        setCountdownText('3'); // Reset the text when starting a new recording
+        setIsCountdownVisible(true);
+        runCountdownAnimation();
+    };
+
+    const handleStopRecording = async (audioFile) => {
+        await stopRecording(audioFile);
+        setShowStopButton(false);
+        setIsCountdownVisible(false);
+    };
 
     const validateServerConfig = () => {
         if (!SERVER_IP) {
@@ -272,8 +338,6 @@ const Letter = () => {
             await uploadRecording(uri, audioFile);
             console.log(uri);
 
-            // Clear the recording state AFTER upload
-            setRecording(null);
         } catch (error) {
             console.error("Error stopping recording:", error);
         }
@@ -329,12 +393,9 @@ const Letter = () => {
                                                 <Icon name="volume-high" size={30} color="#573499" />
                                             </TouchableOpacity>
                                             <TouchableOpacity style={[styles.actionButton, styles.micButton]}
-                                                onPress={recording ? () => stopRecording(letter.audioFiles[2]) : startRecording}>
+                                                onPress={startRecordingWithCountdown}>
                                                 {/* <Icon name="mic" size={30} color={recording ? "#3D9E34FF" : "#573499"} /> */}
-                                                {recording ?
-                                                    <Icon name="stop" size={30} color="#DC2626FF" /> :
-                                                    <Icon name="mic" size={30} color="#573499" />
-                                                }
+                                                <Icon name="mic" size={30} color="#573499" />
                                             </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={styles.actionButton}
@@ -371,6 +432,51 @@ const Letter = () => {
                 loop={false}
                 resizeMode='cover'
             /> */}
+            <Modal
+                transparent={true}
+                visible={isCountdownVisible}
+                animationType="fade"
+            >
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}>
+                    <Animated.Text 
+                        style={[
+                            {
+                                fontSize: 60,
+                                fontWeight: 'bold',
+                                color: 'white',
+                                opacity: textOpacity,
+                                transform: [{ scale: textScale }]
+                            }
+                        ]}
+                    >
+                        {countdownText}
+                    </Animated.Text>
+                    {showStopButton && (
+                        <TouchableOpacity
+                            style={{
+                                marginTop: 40,
+                                backgroundColor: '#DC2626FF',
+                                paddingHorizontal: 20,
+                                paddingVertical: 10,
+                                borderRadius: 25,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                            }}
+                            onPress={() => handleStopRecording(letters.find(l => l.char === activeLetter)?.audioFiles[2])}
+                        >
+                            <Icon name="stop" size={30} color="white" style={{ marginRight: 8 }} />
+                            <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>
+                                Stop Recording
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </Modal>
         </View>
     );
 };
