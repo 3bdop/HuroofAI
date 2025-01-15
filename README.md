@@ -68,6 +68,19 @@ Follow these steps to get the project up and running:
 
 <br/>
 
+## Development Environment Setup 🛠️
+
+During development, you need to create an `env.js` file inside the [`config/`](./config/) directory with the following content:
+
+```javascript
+export const ENV = {
+    SERVER_IP: '<your_server_ip_here>',
+    SERVER_PORT: '<your_server_port_here>',
+};
+```
+
+<br/>
+
 ## Python Model Development 🐍
 
 Follow these steps to set up the Python environment for model development:
