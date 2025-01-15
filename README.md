@@ -58,9 +58,9 @@ Follow these steps to get the project up and running:
     ```
 
     > **Note**: Install `nodemon` globally if you haven't already:
-        > ```bash
-        > npm install -g nodemon
-        >```
+    > ```bash
+    > npm install -g nodemon
+    >```
 
 5. **Download the Expo Go app** on your mobile device.
 
