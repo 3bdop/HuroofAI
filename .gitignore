@@ -34,3 +34,13 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# recorded audios
+uploads/*
+
+# dev machine config
+config/env.js
+
+.env/
+.venv/
+model/pretrained/
