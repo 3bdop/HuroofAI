@@ -1,0 +1,9 @@
+transformers
+transformers[torch]
+numpy
+librosa
+pydub
+ipykernel
+ipywidgets
+matplotlib
+soundfile

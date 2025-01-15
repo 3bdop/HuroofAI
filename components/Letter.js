@@ -1,166 +1,379 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
-import React, { useState } from 'react';
+import { Text, View, TouchableOpacity, ScrollView, Alert, Animated, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { Audio } from 'expo-av';
+import LottieView from 'lottie-react-native';
+import { Button } from '@rneui/base';
+import { ENV } from '../config/env.js';
+import styles from './LetterStyles';
 
 const Letter = () => {
-    const [activeLetter, setActiveLetter] = useState(null); // State to track which letter is active
+    const [permissionResponse, requestPermission] = Audio.usePermissions();
+    const confettiRef = useRef();
+    const confettiRefFalse = useRef();
+    const [activeLetter, setActiveLetter] = useState(null);
+    const [sound, setSound] = useState(null);
+    const [recording, setRecording] = useState(null);
+    const bounceAnim = useRef(new Animated.Value(0)).current;
+    const [isPlaying, setIsPlaying] = useState(false);
 
-    const letters = ['أ', 'ب', 'ت', 'ث']; // Array of Arabic letters
+    const SERVER_PORT = ENV.SERVER_PORT;
+    const SERVER_IP = ENV.SERVER_IP;
+    const SERVER_PATH_UPLOAD = 'upload';
+    const fileType = 'audio/m4a';
+
+    useEffect(() => {
+        // Create the bouncing animation sequence
+        const bounceAnimation = Animated.sequence([
+            Animated.timing(bounceAnim, {
+                toValue: -20, // Move up by 15 units
+                duration: 2000, // 2 seconds up
+                useNativeDriver: true,
+            }),
+            Animated.timing(bounceAnim, {
+                toValue: 0, // Move back to original position
+                duration: 2000, // 2 seconds down
+                useNativeDriver: true,
+            })
+        ]);
+
+        // Create an infinite loop of the animation
+        Animated.loop(bounceAnimation).start();
+    }, []);
+    const [imageList] = useState([
+        {
+            id: '1',
+            image: require('../assets/letters/siin.png')
+        },
+        {
+            id: '2',
+            image: require('../assets/letters/shiin.png')
+        },
+        {
+            id: '3',
+            image: require('../assets/letters/ra.png')
+        },
+        {
+            id: '4',
+            image: require('../assets/letters/kaaf.png')
+        }
+    ]);
+
+
+    // Initialize audio on component mount
+    useEffect(() => {
+        const initAudio = async () => {
+            try {
+                await Audio.setAudioModeAsync({
+                    playsInSilentModeIOS: true,
+                    shouldDuckAndroid: true,
+                    playThroughEarpieceAndroid: false,
+                    staysActiveInBackground: false,
+                    allowsRecordingIOS: false
+                });
+            } catch (error) {
+                console.error('Error initializing audio:', error);
+            }
+        };
+
+        initAudio();
+    }, []);
+
+    // Cleanup function for audio
+    useEffect(() => {
+        return sound
+            ? () => {
+                sound.unloadAsync();
+            }
+            : undefined;
+    }, [sound]);
+    // console.log(require('../uploads/kafOut.m4a'))
+
+    //TODO MultiSession, should config it later
+
+    const letters = [
+        {
+            char: "س",
+            audioFiles: [
+                require("../assets/audio/siin.mp3"),
+                require("../uploads/siinOut.mp3"),
+                "../uploads/siinOut.m4a",
+            ],
+        },
+
+        {
+            char: "ش",
+            audioFiles: [
+                require("../assets/audio/shiin.mp3"),
+                require("../uploads/shiinOut.mp3"),
+                "../uploads/shiinOut.m4a",
+            ],
+        },
+
+        {
+            char: "ر",
+            audioFiles: [
+                require("../assets/audio/ra.mp3"),
+                require("../uploads/raOut.mp3"),
+                "../uploads/raOut.m4a",
+            ],
+        },
+
+        {
+            char: "ك",
+            audioFiles: [
+                require("../assets/audio/kaf.mp3"),
+                require("../uploads/kafOut.mp3"),
+                "../uploads/kafOut.m4a",
+            ],
+        },
+    ];
+
+
+
+    const playSound = async (audioFile) => {
+        try {
+            // Pause or resume the currently playing sound
+            if (sound) {
+                const status = await sound.getStatusAsync();
+                if (status.isPlaying) {
+                    await sound.pauseAsync();
+                    setIsPlaying(false);
+                } else {
+                    await sound.playAsync();
+                    setIsPlaying(true);
+                }
+            } else {
+                // Load and play a new sound
+                console.log("Audio file:", audioFile);
+
+                const soundObject =
+                    typeof audioFile === "string" ? { uri: audioFile } : audioFile;
+
+                const { sound: newSound } = await Audio.Sound.createAsync(soundObject, {
+                    shouldPlay: true,
+                });
+
+                setSound(newSound);
+                setIsPlaying(true);
+
+                // Listen to the playback status to reset `isPlaying` when the sound finishes
+                newSound.setOnPlaybackStatusUpdate((status) => {
+                    if (status.didJustFinish) {
+                        setIsPlaying(false);
+                        setSound(null); // Unload the sound
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Error playing sound:", error.message, error);
+            Alert.alert(
+                "Error playing sound",
+                "Could not play the sound. Please check the file or server configuration."
+            );
+        }
+    };
+
+
 
     const handleLetterPress = (letter) => {
-        // Toggle the active letter
-        setActiveLetter(activeLetter === letter ? null : letter);
+        setActiveLetter(activeLetter === letter.char ? null : letter.char);
     };
+
+    const triggerConfetti = () => {
+        if (confettiRef.current) {
+            confettiRef.current.play(0)
+        }
+    }
+    const triggerConfettiFalse = () => {
+        if (confettiRefFalse.current) {
+            confettiRefFalse.current.play(0)
+        }
+    }
+    const [recordedURI, setRecordedURI] = useState(null); // Store the URI of the recorded audio
+
+    async function startRecording() {
+        try {
+            if (permissionResponse.status !== 'granted') {
+                console.log('Requesting permission..');
+                await requestPermission();
+            }
+            await Audio.setAudioModeAsync({
+                allowsRecordingIOS: true,
+                playsInSilentModeIOS: true,
+            });
+
+            console.log('Starting recording..');
+            const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY
+            );
+            setRecording(recording);
+            console.log('Recording started');
+        } catch (err) {
+            console.error('Failed to start recording', err);
+        }
+    }
+
+    const validateServerConfig = () => {
+        if (!SERVER_IP) {
+            throw new Error('Server IP address not set');
+        }
+
+        if (!SERVER_PORT) {
+            throw new Error('Server Port not set');
+        }
+
+        if (!SERVER_PATH_UPLOAD) {
+            throw new Error('Server Upload Record Path not set');
+        }
+    }
+    const uploadRecording = async (uri, dest) => {
+        try {
+            validateServerConfig();
+            const apiUrl = `http://${SERVER_IP}:${SERVER_PORT}/${SERVER_PATH_UPLOAD}`;
+
+            console.log(apiUrl);
+
+            const formData = new FormData();
+            console.log(dest);
+            formData.append('file', {
+                uri,
+                name: 'recording.m4a',
+                type: fileType,
+            });
+            formData.append('filename', dest);
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                body: formData, // Let the browser handle the Content-Type
+            });
+
+            if (response.ok) {
+                console.log('File uploaded successfully');
+            } else {
+                console.error('Failed to upload file');
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+        }
+    };
+
+
+    // Call this function after recording is stopped
+    const stopRecording = async (audioFile) => {
+        try {
+            // Stop and unload the recording
+            await recording.stopAndUnloadAsync();
+            const uri = recording.getURI();
+            console.log("Recording stopped and stored at", audioFile);
+
+            // Upload the recorded file to the server
+            console.log(audioFile);
+            await uploadRecording(uri, audioFile);
+            console.log(uri);
+
+            // Clear the recording state AFTER upload
+            setRecording(null);
+        } catch (error) {
+            console.error("Error stopping recording:", error);
+        }
+    };
+
     return (
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-            {letters.map((letter, index) => (
-                <View key={index} style={styles.letterContainer}>
-                    {/* Letter Button */}
-                    <TouchableOpacity
-                        style={styles.letterButton}
-                        onPress={() => handleLetterPress(letter)}
-                    >
-                        <Text style={styles.letterText}>{letter}</Text>
-                    </TouchableOpacity>
+        <View style={styles.container}>
+            <LinearGradient
+                colors={['#221C3EFF', "#9C85C6FF", '#573499FF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={styles.gradient}>
 
-                    {/* Buttons Below the Letter */}
-                    {activeLetter === letter && (
-                        <View style={styles.buttonsContainer}>
-                            <TouchableOpacity style={styles.actionButton}>
-                                <Text style={styles.actionButtonText}>Button 1</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.actionButton}>
-                                <Text style={styles.actionButtonText}>Button 2</Text>
-                            </TouchableOpacity>
+
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.imageContainer}
+                >
+                    {imageList.map((item, index) => (
+                        <View key={index} style={styles.imageWrapper}>
+                            <Image
+                                source={item.image}
+                                style={styles.image}
+                                resizeMode="contain"
+                            />
                         </View>
-                    )}
-                </View>
-            ))}
-        </ScrollView>
-        // <View style={styles.container}>
+                    ))}
+                </ScrollView>
 
-        // </View>
-        // <LinearGradient
-        //     colors={['#573499FF', "#9C85C6FF", '#2C2356']}
-        //     start={{ x: 0, y: 0 }} // Top-left corner
-        //     end={{ x: 1, y: 1 }}   // Bottom-right corner
-        //     style={styles.container}
-        // >
-        //     {/* Letter Image */}
-        //     <View style={styles.imageContainer}>
-        //         <Image
-        //             source={require('../assets/icon.png')} //..................
-        //             style={styles.letterImage}
-        //             resizeMode="contain"
-        //         />
-        //     </View>
+                <ScrollView contentContainerStyle={styles.scrollContainer}>
+                    <View style={styles.cardsContainer}>
+                        {letters.map((letter, index) => (
+                            <View key={index} style={styles.letterWrapper}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.letterButton,
+                                        activeLetter === letter.char && styles.activeLetter
+                                    ]}
+                                    onPress={() => handleLetterPress(letter)}
+                                >
+                                    <Text style={styles.letterText}>{letter.char}</Text>
+                                </TouchableOpacity>
 
-        //     {/* Interactive Buttons */}
-        //     <View style={styles.buttonsContainer}>
-        //         <TouchableOpacity style={styles.circleButton}>
-        //             <Icon name="volume-high" size={24} color="#FFF" />
-        //         </TouchableOpacity>
+                                {activeLetter === letter.char && (
+                                    <View style={styles.buttonsContainer}>
+                                        <View style={{ justifyContent: 'space-between', flexDirection: 'row' }}>
 
-        //         <TouchableOpacity style={styles.circleButton}>
-        //             <Icon name="mic" size={24} color="#FFF" />
-        //         </TouchableOpacity>
-        //     </View>
-        // </LinearGradient>
+                                            <TouchableOpacity
+                                                style={styles.actionButton}
+                                                onPress={() => playSound(letter.audioFiles[0])}
+                                            >
+                                                <Icon name="volume-high" size={30} color="#573499" />
+                                            </TouchableOpacity>
+                                            <TouchableOpacity style={[styles.actionButton, styles.micButton]}
+                                                onPress={recording ? () => stopRecording(letter.audioFiles[2]) : startRecording}>
+                                                {/* <Icon name="mic" size={30} color={recording ? "#3D9E34FF" : "#573499"} /> */}
+                                                {recording ?
+                                                    <Icon name="stop" size={30} color="#DC2626FF" /> :
+                                                    <Icon name="mic" size={30} color="#573499" />
+                                                }
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.actionButton}
+                                                // onPress={playRecordedAudio}  // TODO: Use PlaySound() instead
+
+                                                onPress={() => playSound(letter.audioFiles[1])}
+                                            >
+                                                <Icon name={isPlaying ? "pause" : "play"} size={30} color={isPlaying ? "#3D9E34FF" : "#573499"} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                )}
+                            </View>
+                        ))}
+                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                            <Button title="True" onPress={triggerConfetti} />
+                            {/* <Button title="false" onPress={triggerConfettiFalse} /> */}
+                        </View>
+                    </View>
+                </ScrollView>
+
+            </LinearGradient>
+            <LottieView
+                ref={confettiRef}
+                source={require("../assets/animations/animation.json")}
+                style={styles.lottie}
+                loop={false}
+                resizeMode='cover'
+            />
+            {/* <LottieView
+                ref={confettiRefFalse}
+                source={require("../assets/animations/false.json")}
+                style={styles.lottieF}
+                loop={false}
+                resizeMode='cover'
+            /> */}
+        </View>
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: 'snow'
-    },
-    header: {
-        height: 60,
-        paddingHorizontal: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    backButton: {
-        padding: 8,
-    },
-    imageContainer: {
-        height: Dimensions.get('window').height * 0.5,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    letterImage: {
-        width: '80%',
-        height: '80%',
-    },
-    buttonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-        gap: 100,
-    },
-    circleButton: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: '#FF6B6B',
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-    },
-    scrollContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 20,
-        // backgroundColor: 'snow',
-    },
-    letterContainer: {
-        marginBottom: 20,
-    },
-    letterButton: {
-        backgroundColor: '#6C63FF',
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    letterText: {
-        fontSize: 24,
-        color: '#FFF',
-        fontWeight: 'bold',
-    },
-    buttonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginTop: 10,
-    },
-    actionButton: {
-        backgroundColor: '#FF6B6B',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-    },
-    actionButtonText: {
-        color: '#FFF',
-        fontWeight: 'bold',
-    },
-});
 
 export default Letter;
