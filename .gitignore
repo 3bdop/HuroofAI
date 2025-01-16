@@ -36,11 +36,12 @@ yarn-error.*
 *.tsbuildinfo
 
 # recorded audios
-uploads/*
+backend/uploads/*
 
 # dev machine config
-config/env.js
+backend/config/env.js
 
 .env/
 .venv/
-model/pretrained/
+backend/app/services/pretrained/
+backend/app/services/pretrained/model.safetensors
