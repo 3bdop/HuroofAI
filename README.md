@@ -8,6 +8,8 @@ Welcome to the MOEHE- app! This project is designed to help you learn some of th
 
 ## [Demo 📹🔉](https://i.imgur.com/iaj9uPy.mp4)
 
+<br/>
+
 ## Prerequisites 🚀
 
 Before you begin, make sure you have the following installed:
@@ -15,6 +17,9 @@ Before you begin, make sure you have the following installed:
 - [Node.js](https://nodejs.org/)
 - [Expo CLI](https://docs.expo.dev/get-started/installation/)
 - A compatible Operating System: Windows, macOS, or Linux
+- [Python 3.12+](https://www.python.org/downloads/)
+
+<br/>
 
 ## Installation 🛠️
 
@@ -53,13 +58,64 @@ Follow these steps to get the project up and running:
     ```
 
     > **Note**: Install `nodemon` globally if you haven't already:
-        > ```bash
-        > npm install -g nodemon
-        >```
+    > ```bash
+    > npm install -g nodemon
+    >```
 
 5. **Download the Expo Go app** on your mobile device.
 
 6. **Scan the QR code** provided by Expo to run the app on your device.
+
+<br/>
+
+## Development Environment Setup 🛠️
+
+During development, you need to create an `env.js` file inside the [`config/`](./config/) directory with the following content:
+
+```javascript
+export const ENV = {
+    SERVER_IP: '<your_server_ip_here>',
+    SERVER_PORT: '<your_server_port_here>',
+};
+```
+
+<br/>
+
+## Python Model Development 🐍
+
+Follow these steps to set up the Python environment for model development:
+
+1. **Create a virtual environment:**
+
+    For Windows:
+
+    ```bash
+    python -m venv .venv
+    .\.venv\Scripts\activate.bat
+    ```
+
+    For Linux/macOS:
+
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate
+    ```
+
+2. **Install Python dependencies:**
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3. **Run Jupyter Notebooks:**
+
+    ```bash
+    jupyter notebook
+    ```
+
+    > **Note**: You can also use Jupyter notebooks directly within VSCode. Install the [Jupyter extension for VSCode](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter) and open your notebooks in the editor.
+
+<br/>
 
 ## Dev Resources
 
