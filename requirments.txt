@@ -6,4 +6,6 @@ pydub
 ipykernel
 ipywidgets
 matplotlib
+fastapi
+pydantic
 #soundfile
