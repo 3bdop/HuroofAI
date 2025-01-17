@@ -4,6 +4,7 @@ from pydub import AudioSegment
 import os
 from pathlib import Path
 from fastapi.responses import PlainTextResponse
+import time
 
 
 # Create the FastAPI app
@@ -40,9 +41,20 @@ async def upload_file(file: UploadFile, filename: str = Form(...)):
     #     )
 
     try:
+        # # Ensure sanitized filename
+        # original_filename = os.path.basename(filename)
+        # sanitized_filename = original_filename.replace(".m4a", ".mp3")
+        # temp_path = os.path.join(UPLOAD_DIR, original_filename)
+        # dest_path = os.path.join(UPLOAD_DIR, sanitized_filename)
+
+        # Get the current timestamp in UNIX epoch format
+        timestamp = int(time.time())
+
         # Ensure sanitized filename
         original_filename = os.path.basename(filename)
-        sanitized_filename = original_filename.replace(".m4a", ".mp3")
+        sanitized_filename = (
+            f"{original_filename.replace('.m4a', '')}_{timestamp}.mp3"
+        )
         temp_path = os.path.join(UPLOAD_DIR, original_filename)
         dest_path = os.path.join(UPLOAD_DIR, sanitized_filename)
 
@@ -75,3 +87,70 @@ if __name__ == "__main__":
 
     uvicorn.run(app, host="192.168.118.72", port=3000)
 # Start the server with `uvicorn main:app --reload`
+
+# from fastapi import FastAPI, Depends, HTTPException
+# from sqlalchemy.orm import Session
+# from .database import engine, Base, get_db
+# from .models import AudioMetadata
+
+# app = FastAPI()
+
+# # Create the database tables
+# Base.metadata.create_all(bind=engine)
+
+
+# @app.post("/audio_metadata")
+# def create_audio_metadata(data: dict, db: Session = Depends(get_db)):
+#     try:
+#         new_record = AudioMetadata(
+#             filename=data["filename"],
+#             arabic_letter=data["arabic_letter"],
+#             file_path=data["file_path"],
+#             duration=data["duration"],
+#             user_session_id=data.get("user_session_id"),
+#         )
+#         db.add(new_record)
+#         db.commit()
+#         db.refresh(new_record)
+#         return new_record.to_dict()
+#     except Exception as e:
+#         db.rollback()
+#         raise HTTPException(status_code=400, detail=str(e))
+
+
+# @app.get("/audio_metadata/{filename}")
+# def get_audio_metadata(filename: str, db: Session = Depends(get_db)):
+#     record = db.query(AudioMetadata).filter_by(filename=filename).first()
+#     if record:
+#         return record.to_dict()
+#     raise HTTPException(status_code=404, detail="Record not found")
+
+
+# @app.put("/audio_metadata/{filename}")
+# def update_audio_metadata(
+#     filename: str, data: dict, db: Session = Depends(get_db)
+# ):
+#     record = db.query(AudioMetadata).filter_by(filename=filename).first()
+#     if record:
+#         try:
+#             record.arabic_letter = data.get(
+#                 "arabic_letter", record.arabic_letter
+#             )
+#             record.file_path = data.get("file_path", record.file_path)
+#             record.duration = data.get("duration", record.duration)
+#             record.user_session_id = data.get(
+#                 "user_session_id", record.user_session_id
+#             )
+#             db.commit()
+#             db.refresh(record)
+#             return record.to_dict()
+#         except Exception as e:
+#             db.rollback()
+#             raise HTTPException(status_code=400, detail=str(e))
+#     raise HTTPException(status_code=404, detail="Record not found")
+
+
+# if __name__ == "__main__":
+#     import uvicorn
+
+#     uvicorn.run(app, host="localhost", port=8000)
