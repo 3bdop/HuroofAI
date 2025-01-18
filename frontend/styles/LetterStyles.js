@@ -5,6 +5,8 @@ const { width: ScreenWidth, height: ScreenHeight } = Dimensions.get('window');
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        // justifyContent: 'center',
+        // alignItems: 'center'
     },
     gradient: {
         flex: 1,
@@ -89,13 +91,28 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
         pointerEvents: 'none'
     },
-    lottieF: {
-        width: ScreenWidth * 0.2,
+    lottieP: {
+        width: ScreenWidth * 0.3,
         height: ScreenHeight * 0.1,
         position: 'absolute',
-        alignSelf: 'center',
-        zIndex: 999,
-        elevation: 999,
+        // alignSelf: 'center',
+        // top: 0,
+        // left: 0,
+        // right: 0,
+        // bottom: 0,
+        // marginHorizontal: 100,
+        zIndex: 9999,
+        elevation: 9999,
+        backgroundColor: 'transparent',
+        pointerEvents: 'none',
+    },
+    lottieF: {
+        width: ScreenWidth * 0.65,
+        height: ScreenHeight * 0.3,
+        position: 'absolute',
+
+        zIndex: 999919,
+        elevation: 999919,
         backgroundColor: 'transparent',
         pointerEvents: 'none'
     },

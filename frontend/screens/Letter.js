@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, ScrollView, Alert, Animated, Image } from 'react-native';
+import { Text, View, TouchableOpacity, ScrollView, Alert, Image, Animated, Dimensions } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -7,16 +7,24 @@ import LottieView from 'lottie-react-native';
 import { Button } from '@rneui/base';
 import { ENV } from '../../backend/config/env';
 import styles from '../styles/LetterStyles';
+import * as FileSystem from 'expo-file-system';
+import { Asset } from 'expo-asset';
+
 
 const Letter = () => {
     const [permissionResponse, requestPermission] = Audio.usePermissions();
-    const confettiRef = useRef();
-    const confettiRefFalse = useRef();
+    const confettiRef = useRef(null);
+    const [confettiTrue, setConfettiTrue] = useState(false);
+    const recFirst = useRef(null);
+    const confettiRefFalse = useRef(null);
+    const [confettiFalse, setConfettiFalse] = useState(false);
     const [activeLetter, setActiveLetter] = useState(null);
     const [sound, setSound] = useState(null);
     const [recording, setRecording] = useState(null);
-    const bounceAnim = useRef(new Animated.Value(0)).current;
     const [isPlaying, setIsPlaying] = useState(false);
+    const fadeAnim = useRef(new Animated.Value(0)).current; // Initial opacity value
+
+    const { width: ScreenWidth, height: ScreenHeight } = Dimensions.get('window');
 
     const SERVER_PORT = ENV.SERVER_PORT;
     const SERVER_IP = ENV.SERVER_IP;
@@ -24,23 +32,55 @@ const Letter = () => {
     const fileType = 'audio/m4a';
 
     useEffect(() => {
-        // Create the bouncing animation sequence
-        const bounceAnimation = Animated.sequence([
-            Animated.timing(bounceAnim, {
-                toValue: -20, // Move up by 15 units
-                duration: 2000, // 2 seconds up
-                useNativeDriver: true,
-            }),
-            Animated.timing(bounceAnim, {
-                toValue: 0, // Move back to original position
-                duration: 2000, // 2 seconds down
-                useNativeDriver: true,
-            })
-        ]);
+        if (confettiTrue) {
+            if (confettiRef.current) {
+                confettiRef.current.play(0);
+                const timeout = setTimeout(() => {
+                    setConfettiTrue(false); // Reset the state
+                }, 2000); // Adjust the timeout to match the animation duration
 
-        // Create an infinite loop of the animation
-        Animated.loop(bounceAnimation).start();
-    }, []);
+                return () => clearTimeout(timeout); // Cleanup the timeout
+            }
+        }
+    }, [confettiTrue]);
+    // // Function to fade in
+    const fadeIn = () => {
+        Animated.timing(fadeAnim, {
+            toValue: 1, // Fade in to fully visible
+            duration: 500, // Duration of the fade-in animation
+            useNativeDriver: true, // Use native driver for better performance
+        }).start(() => {
+            // After fade-in, start the Lottie animation
+            if (confettiRefFalse.current) {
+                confettiRefFalse.current.play();
+            }
+
+            // After the Lottie animation finishes, fade out
+            setTimeout(() => {
+                fadeOut();
+            }, 900); // Wait 2 seconds before fading out
+        });
+    };
+
+    // Function to fade out
+    const fadeOut = () => {
+        Animated.timing(fadeAnim, {
+            toValue: 0, // Fade out to fully transparent
+            duration: 500, // Duration of the fade-out animation
+            useNativeDriver: true, // Use native driver for better performance
+        }).start();
+    };
+
+    // Trigger the animation when `confettiFalse` changes
+    useEffect(() => {
+        if (confettiFalse) {
+            fadeIn(); // Start the fade-in animation
+        }
+    }, [confettiFalse]);
+
+
+
+
     const [imageList] = useState([
         {
             id: '1',
@@ -91,46 +131,98 @@ const Letter = () => {
     // console.log(require('../uploads/kafOut.m4a'))
 
     //TODO MultiSession, should config it later
-
+    const [recordedURIs, setRecordedURIs] = useState(null); // Store the URI of the recorded audio
+    const [recordedURIsh, setRecordedURIsh] = useState(null); // Store the URI of the recorded audio
+    const [recordedURIr, setRecordedURIr] = useState(null); // Store the URI of the recorded audio
+    const [recordedURIk, setRecordedURIk] = useState(null); // Store the URI of the recorded audio
+    const audioURIs = [
+        recordedURIs,
+        recordedURIsh,
+        recordedURIr,
+        recordedURIk
+    ]
     const letters = [
         {
             char: "س",
+            charURI: recordedURIs,
             audioFiles: [
                 require("../assets/audio/siin.mp3"),
-                require("../../backend/uploads/siinOut.mp3"),
                 "../../backend/uploads/siinOut.m4a",
+                "../../backend/uploads/siinOut.mp3",
+                // { uri: "../../backend/uploads/siinOut.mp3" },
             ],
         },
 
         {
             char: "ش",
+            charURI: recordedURIsh,
             audioFiles: [
                 require("../assets/audio/shiin.mp3"),
-                require("../../backend/uploads/shiinOut.mp3"),
                 "../../backend/uploads/shiinOut.m4a",
+                "../../backend/uploads/shiinOut.mp3",
+                // { uri: "../../backend/uploads/shiinOut.mp3" },
             ],
         },
 
         {
             char: "ر",
+            charURI: recordedURIr,
             audioFiles: [
                 require("../assets/audio/ra.mp3"),
-                require("../../backend/uploads/raOut.mp3"),
                 "../../backend/uploads/raOut.m4a",
+                "../../backend/uploads/raOut.mp3",
+                // { uri: "../../backend/uploads/raOut.mp3" },
             ],
         },
 
         {
             char: "ك",
+            charURI: recordedURIk,
             audioFiles: [
                 require("../assets/audio/kaf.mp3"),
-                require("../../backend/uploads/kafOut.mp3"),
                 "../../backend/uploads/kafOut.m4a",
+                "../../backend/uploads/kafOut.mp3",
+                // { uri: "../../backend/uploads/kafOut.mp3" },
             ],
         },
     ];
 
+    // const folderPath = `${FileSystem.documentDirectory}MOEHE-app/`;
 
+    // const createFolder = async () => {
+    //     try {
+    //         const folderInfo = await FileSystem.getInfoAsync(folderPath);
+    //         if (!folderInfo.exists) {
+    //             await FileSystem.makeDirectoryAsync(folderPath, { intermediates: true });
+    //             console.log("Folder created:", folderPath);
+    //         } else {
+    //             console.log("Folder already exists:", folderPath);
+    //         }
+    //     } catch (error) {
+    //         console.error("Error creating folder:", error);
+    //     }
+    // };
+
+    // const saveAudioFiles = async (audioUris) => {
+    //     try {
+    //         await createFolder(); // Ensure the folder exists
+
+    //         for (const [index, audioUri] of audioUris.entries()) {
+    //             const fileName = `audio_${index + 1}.mp3`; // Example file name
+    //             const destinationUri = `${folderPath}${fileName}`;
+
+    //             await FileSystem.copyAsync({
+    //                 from: audioUri,
+    //                 to: destinationUri,
+    //             });
+    //             console.log(`Audio file saved: ${destinationUri}`);
+    //         }
+    //     } catch (error) {
+    //         console.error("Error saving audio files:", error);
+    //     }
+    // };
+
+    // saveAudioFiles(audioURIs)
 
     const playSound = async (audioFile) => {
         try {
@@ -167,11 +259,12 @@ const Letter = () => {
                 });
             }
         } catch (error) {
+            recFirst.current.play();
             console.error("Error playing sound:", error.message, error);
-            Alert.alert(
-                "Error playing sound",
-                "Could not play the sound. Please check the file or server configuration."
-            );
+            // Alert.alert(
+            //     "No audio found",
+            //     "Please record first🙁"
+            // );
         }
     };
 
@@ -181,17 +274,30 @@ const Letter = () => {
         setActiveLetter(activeLetter === letter.char ? null : letter.char);
     };
 
-    const triggerConfetti = () => {
-        if (confettiRef.current) {
-            confettiRef.current.play(0)
-        }
-    }
-    const triggerConfettiFalse = () => {
-        if (confettiRefFalse.current) {
-            confettiRefFalse.current.play(0)
-        }
-    }
-    const [recordedURI, setRecordedURI] = useState(null); // Store the URI of the recorded audio
+
+
+    // function triggerConfetti() {
+    //     if (confettiTrue) {
+    //         if (confettiRef.current) {
+    //             confettiRef.current.play(0)
+    //         }
+    //     }
+    // }
+    // // triggerConfetti()
+    // const triggerRecFirst = () => {
+    //     if (recFirst.current) {
+    //         recFirst.current.play(0)
+    //     }
+    // }
+    // function triggerConfettiFalse() {
+    //     if (confettiFalse) {
+
+    //         if (confettiRefFalse.current) {
+    //             confettiRefFalse.current.play(0)
+    //         }
+    //     }
+    // }
+    // triggerConfettiFalse()
 
     async function startRecording() {
         try {
@@ -245,7 +351,7 @@ const Letter = () => {
 
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                body: formData, // Let the browser handle the Content-Type
+                body: formData,
             });
 
             if (response.ok) {
@@ -260,7 +366,7 @@ const Letter = () => {
 
 
     // Call this function after recording is stopped
-    const stopRecording = async (audioFile) => {
+    const stopRecording = async (audioFile, char) => {
         try {
             // Stop and unload the recording
             await recording.stopAndUnloadAsync();
@@ -271,7 +377,24 @@ const Letter = () => {
             console.log(audioFile);
             await uploadRecording(uri, audioFile);
             console.log(uri);
+            switch (char) {
+                case "س":
+                    setRecordedURIs(uri);
 
+                    break;
+                case "ش":
+                    setRecordedURIsh(uri);
+
+                    break;
+                case "ر":
+                    setRecordedURIr(uri);
+
+                    break;
+
+                default:
+                    setRecordedURIk(uri);
+                    break;
+            }
             // Clear the recording state AFTER upload
             setRecording(null);
         } catch (error) {
@@ -303,7 +426,34 @@ const Letter = () => {
                         </View>
                     ))}
                 </ScrollView>
+                <View style={{ justifyContent: 'center', alignItems: 'center', }}>
 
+                    <Animated.View style={{
+                        opacity: fadeAnim,
+                        width: ScreenWidth * 0.65, // Match the LottieView width
+                        height: ScreenHeight * 0.3, // Match the LottieView height
+                        position: 'absolute',
+                        zIndex: 999919,
+                        elevation: 999919,
+                        backgroundColor: 'transparent',
+                        pointerEvents: 'none',
+                    }}>
+                        <LottieView
+                            ref={confettiRefFalse}
+                            source={require("../assets/animations/false.json")}
+                            loop={false}
+                            style={styles.lottieF}
+                            resizeMode='cover'
+                        />
+                    </Animated.View>
+                    {/* <LottieView
+                        ref={confettiRefFalse}
+                        source={require("../assets/animations/false.json")}
+                        style={styles.lottieF}
+                        loop={false}
+                        resizeMode='cover'
+                    /> */}
+                </View>
                 <ScrollView contentContainerStyle={styles.scrollContainer}>
                     <View style={styles.cardsContainer}>
                         {letters.map((letter, index) => (
@@ -328,19 +478,31 @@ const Letter = () => {
                                             >
                                                 <Icon name="volume-high" size={30} color="#573499" />
                                             </TouchableOpacity>
-                                            <TouchableOpacity style={[styles.actionButton, styles.micButton]}
-                                                onPress={recording ? () => stopRecording(letter.audioFiles[2]) : startRecording}>
-                                                {/* <Icon name="mic" size={30} color={recording ? "#3D9E34FF" : "#573499"} /> */}
-                                                {recording ?
-                                                    <Icon name="stop" size={30} color="#DC2626FF" /> :
-                                                    <Icon name="mic" size={30} color="#573499" />
-                                                }
-                                            </TouchableOpacity>
+                                            <View style={{ width: ScreenWidth * 0.1, justifyContent: 'center', alignItems: 'center' }}>
+
+                                                <LottieView
+                                                    ref={recFirst}
+                                                    source={require("../assets/animations/pressRec.json")}
+                                                    style={styles.lottieP}
+                                                    loop={false}
+                                                    resizeMode='cover'
+                                                />
+                                                <TouchableOpacity style={[styles.actionButton, styles.micButton]}
+                                                    onPress={recording ? () => stopRecording(letter.audioFiles[1], letter.char) : startRecording}>
+                                                    {/* <Icon name="mic" size={30} color={recording ? "#3D9E34FF" : "#573499"} /> */}
+                                                    {recording ?
+                                                        <Icon name="stop" size={30} color="#DC2626FF" /> :
+                                                        <Icon name="mic" size={30} color="#573499" />
+                                                    }
+                                                </TouchableOpacity>
+                                            </View>
+
                                             <TouchableOpacity
                                                 style={styles.actionButton}
                                                 // onPress={playRecordedAudio}  // TODO: Use PlaySound() instead
 
-                                                onPress={() => playSound(letter.audioFiles[1])}
+                                                // onPress={() => playSound(letter.audioFiles[2])}
+                                                onPress={() => playSound(letter.charURI)}
                                             >
                                                 <Icon name={isPlaying ? "pause" : "play"} size={30} color={isPlaying ? "#3D9E34FF" : "#573499"} />
                                             </TouchableOpacity>
@@ -350,7 +512,7 @@ const Letter = () => {
                             </View>
                         ))}
                         <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                            <Button title="True" onPress={triggerConfetti} />
+                            <Button title="True" onPress={() => setConfettiTrue(true)} />
                             {/* <Button title="false" onPress={triggerConfettiFalse} /> */}
                         </View>
                     </View>
@@ -364,13 +526,7 @@ const Letter = () => {
                 loop={false}
                 resizeMode='cover'
             />
-            {/* <LottieView
-                ref={confettiRefFalse}
-                source={require("../assets/animations/false.json")}
-                style={styles.lottieF}
-                loop={false}
-                resizeMode='cover'
-            /> */}
+
         </View>
     );
 };

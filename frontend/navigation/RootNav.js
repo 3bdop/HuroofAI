@@ -7,6 +7,8 @@ import Letter from '../screens/Letter';
 // import SplashScreen from '../screens/SplashScreen';
 
 const Stack = createNativeStackNavigator();
+// const HomeScreen = React.lazy(() => import('../screens/Home'))
+// const LetterScreen = React.lazy(() => import('../screens/Letter'))
 
 const RootNav = () => {
     return (

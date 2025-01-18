@@ -4,9 +4,10 @@ import time
 from fastapi import FastAPI, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from pydub import AudioSegment
-from sqlalchemy.orm import Session
-from .database import engine, SessionLocal
-from .models import AudioMetadata, Base
+
+# from sqlalchemy.orm import Session
+# from .database import engine, SessionLocal
+# from .models import AudioMetadata, Base
 
 
 # Create the FastAPI app
@@ -27,13 +28,11 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # if not FFMPEG_INSTALLED:
 #     raise RuntimeError("FFmpeg is not installed or not available in PATH.")
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 
 @app.post("/upload")
-async def upload_file(
-    file: UploadFile, filename: str = Form(...), db: Session = SessionLocal()
-):
+async def upload_file(file: UploadFile, filename: str = Form(...)):
     """
     Uploads an audio file, converts it to MP3 format, and saves it.
     """
@@ -51,13 +50,14 @@ async def upload_file(
         # dest_path = os.path.join(UPLOAD_DIR, sanitized_filename)
 
         # Get the current timestamp in UNIX epoch format
-        timestamp = int(time.time())
+        # timestamp = int(time.time())
 
         # Ensure sanitized filename
         original_filename = os.path.basename(filename)
-        sanitized_filename = (
-            f"{original_filename.replace('.m4a', '')}_{timestamp}.mp3"
-        )
+        # sanitized_filename = (
+        #     f"{original_filename.replace('.m4a', '')}_{timestamp}.mp3"
+        # )
+        sanitized_filename = f"{original_filename.replace('.m4a', '')}.mp3"
         temp_path = os.path.join(UPLOAD_DIR, original_filename)
         dest_path = os.path.join(UPLOAD_DIR, sanitized_filename)
 
@@ -73,18 +73,18 @@ async def upload_file(
         os.remove(temp_path)
 
         # Store metadata in the database
-        metadata = AudioMetadata(
-            filename=sanitized_filename,
-            upload_timestamp=datetime.utcnow(),
-            arabic_letter=filename.split("_")[
-                0
-            ],  # Assuming the filename contains the Arabic letter
-            file_path=dest_path,
-            duration=audio.duration_seconds,
-            user_session_id=None,  # Add user session ID if applicable
-        )
-        db.add(metadata)
-        db.commit()
+        # metadata = AudioMetadata(
+        #     filename=sanitized_filename,
+        #     upload_timestamp=datetime.utcnow(),
+        #     arabic_letter=filename.split("_")[
+        #         0
+        #     ],  # Assuming the filename contains the Arabic letter
+        #     file_path=dest_path,
+        #     duration=audio.duration_seconds,
+        #     user_session_id=None,  # Add user session ID if applicable
+        # )
+        # db.add(metadata)
+        # db.commit()
 
         return JSONResponse(
             status_code=200,
@@ -94,12 +94,12 @@ async def upload_file(
             },
         )
     except Exception as e:
-        db.rollback()
+        # db.rollback()
         raise HTTPException(
             status_code=500, detail=f"Error processing file: {str(e)}"
         )
-    finally:
-        db.close()
+    # finally:
+    #     db.close()
 
 
 if __name__ == "__main__":
