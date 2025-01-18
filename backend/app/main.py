@@ -1,10 +1,12 @@
+import datetime
+import os
+import time
 from fastapi import FastAPI, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from pydub import AudioSegment
-import os
-from pathlib import Path
-from fastapi.responses import PlainTextResponse
-import time
+from sqlalchemy.orm import Session
+from .database import engine, SessionLocal
+from .models import AudioMetadata, Base
 
 
 # Create the FastAPI app
@@ -24,13 +26,14 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # FFMPEG_INSTALLED = os.system("ffmpeg -version") == 0
 # if not FFMPEG_INSTALLED:
 #     raise RuntimeError("FFmpeg is not installed or not available in PATH.")
-@app.get("/hi", response_class=PlainTextResponse)
-async def say_hi():
-    return "Hello, world!"
+
+Base.metadata.create_all(bind=engine)
 
 
 @app.post("/upload")
-async def upload_file(file: UploadFile, filename: str = Form(...)):
+async def upload_file(
+    file: UploadFile, filename: str = Form(...), db: Session = SessionLocal()
+):
     """
     Uploads an audio file, converts it to MP3 format, and saves it.
     """
@@ -69,6 +72,20 @@ async def upload_file(file: UploadFile, filename: str = Form(...)):
         # Remove the temporary .m4a file
         os.remove(temp_path)
 
+        # Store metadata in the database
+        metadata = AudioMetadata(
+            filename=sanitized_filename,
+            upload_timestamp=datetime.utcnow(),
+            arabic_letter=filename.split("_")[
+                0
+            ],  # Assuming the filename contains the Arabic letter
+            file_path=dest_path,
+            duration=audio.duration_seconds,
+            user_session_id=None,  # Add user session ID if applicable
+        )
+        db.add(metadata)
+        db.commit()
+
         return JSONResponse(
             status_code=200,
             content={
@@ -77,9 +94,12 @@ async def upload_file(file: UploadFile, filename: str = Form(...)):
             },
         )
     except Exception as e:
+        db.rollback()
         raise HTTPException(
             status_code=500, detail=f"Error processing file: {str(e)}"
         )
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

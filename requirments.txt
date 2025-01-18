@@ -8,4 +8,10 @@ ipywidgets
 matplotlib
 fastapi
 pydantic
+sqlalchemy 
+psycopg2-binary 
+alembic
+pymysql
+Flask-SQLAlchemy
+passlib
 #soundfile
