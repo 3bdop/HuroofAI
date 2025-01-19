@@ -21,6 +21,7 @@ const Letter = () => {
     const [recording, setRecording] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current; // Initial opacity value
+    const fadeAnim2 = useRef(new Animated.Value(0)).current; // Initial opacity value
 
     const { width: ScreenWidth, height: ScreenHeight } = Dimensions.get('window');
 
@@ -29,7 +30,32 @@ const Letter = () => {
     const SERVER_IP = Constants.expoConfig.extra.serverIp;
     const SERVER_PORT = Constants.expoConfig.extra.serverPort;
 
+    const fadeInCorrect = () => {
+        fadeAnim2.setValue(0);
+
+
+        Animated.timing(fadeAnim2, {
+            toValue: 1, // Fade in to fully visible
+            duration: 500, // Duration of the fade-in animation
+            useNativeDriver: true, // Use native driver for better performance
+        }).start(() => {
+            // After fade-in, start the Lottie animation
+            if (confettiRef.current) {
+                confettiRef.current.reset();
+                confettiRef.current.play(0);
+            }
+
+            // After the Lottie animation finishes, fade out
+            setTimeout(() => {
+                fadeOut();
+            }, 950); // Wait 2 seconds before fading out
+        });
+    };
+
     const fadeIn = () => {
+        fadeAnim.setValue(0);
+
+
         Animated.timing(fadeAnim, {
             toValue: 1, // Fade in to fully visible
             duration: 500, // Duration of the fade-in animation
@@ -37,7 +63,8 @@ const Letter = () => {
         }).start(() => {
             // After fade-in, start the Lottie animation
             if (confettiRefFalse.current) {
-                confettiRefFalse.current.play();
+                confettiRefFalse.current.reset();
+                confettiRefFalse.current.play(0);
             }
 
             // After the Lottie animation finishes, fade out
@@ -56,21 +83,19 @@ const Letter = () => {
         }).start();
     };
 
-    async function answerCorrect() {
-        if (!confettiRef.current) {
-            return
-        }
+    function answerCorrect() {
 
-        // await Haptics.impactAsync(Haptics.NotificationFeedbackType.Success)
-        confettiRef.current.play(0);
+        Haptics.impactAsync(Haptics.NotificationFeedbackType.Success);
+        fadeInCorrect();
     }
 
     async function answerWrong() {
-        fadeIn()
-        // await Haptics.impactAsync(Haptics.NotificationFeedbackType.Error)
+        Haptics.impactAsync(Haptics.NotificationFeedbackType.Error)
+        fadeIn();
     }
 
     function answerAlert(isCorrect) {
+        console.log(isCorrect);
         isCorrect ? answerCorrect() : answerWrong();
     }
 
