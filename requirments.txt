@@ -2,8 +2,7 @@ transformers
 transformers[torch]
 numpy
 librosa
-pydub
-ipykernel
-ipywidgets
-matplotlib
 soundfile
+fastapi[all]
+Levenshtein
+aiofiles
