@@ -1,5 +1,6 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+.vscode/
 # dependencies
 node_modules/
 
@@ -41,6 +42,10 @@ uploads/*
 # dev machine config
 config/env.js
 
+__pycache__/
 .env/
 .venv/
-model/pretrained/
+models/
+.env
+
+recordings/
