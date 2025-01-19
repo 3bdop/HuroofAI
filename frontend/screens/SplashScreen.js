@@ -13,7 +13,7 @@ const SplashScreen = () => {
     return (
         <View style={styles.container}>
             <Animated.Image
-                source={require('../assets/sp.gif')}
+                source={require('../../assets/sp.gif')}
                 style={[styles.image, { transform: [{ scale: imageScale }] }]}
             />
         </View>

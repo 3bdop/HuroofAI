@@ -2,10 +2,10 @@ import { StyleSheet, Text, View, Dimensions, ImageBackground, Animated } from 'r
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react'
 import { Image, Input, Button } from "@rneui/themed";
+import styles from '../styles/HomeStyles';
 import * as Haptics from 'expo-haptics';
 
-const screenWidth = Dimensions.get("window").width;
-const screenHeight = Dimensions.get("window").height;
+const { width: ScreenWidth, height: ScreenHeight } = Dimensions.get('window');
 
 const Home = ({ navigation }) => {
     // Create animated value for vertical movement
@@ -38,7 +38,7 @@ const Home = ({ navigation }) => {
             style={{ flex: 1, justifyContent: 'center', alignItems: 'center', }}>
             <Animated.View
                 style={{
-                    width: screenWidth,
+                    width: ScreenWidth,
                     height: "50%",
                     justifyContent: 'center',
                     alignItems: 'center',
@@ -46,11 +46,8 @@ const Home = ({ navigation }) => {
                 }}
             >
                 <Image
-                    source={require("../assets/Group.png")}
-                    style={{
-                        width: screenWidth,
-                        height: screenHeight * 0.7,
-                    }}
+                    source={require("../assets/images/Group.png")}
+                    style={styles.imageStyle}
                 />
             </Animated.View>
             <View style={{ justifyContent: "center", alignItems: "center", height: "20%" }}>
@@ -69,15 +66,9 @@ const Home = ({ navigation }) => {
                         color: "black",
                         fontWeight: "bold",
                     }}
-                    buttonStyle={{
-                        backgroundColor: "snow",
-                        paddingVertical: screenWidth * 0.045,
-                        borderWidth: 2,
-                        borderColor: "black",
-                        borderRadius: 10,
-                    }}
+                    buttonStyle={styles.buttonStyle}
                     containerStyle={{
-                        width: screenWidth * 0.75,
+                        width: ScreenWidth * 0.75,
                     }}
                     onPress={() => [navigation.navigate("Letter"),
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium
@@ -90,32 +81,3 @@ const Home = ({ navigation }) => {
 
 export default Home
 
-const styles = StyleSheet.create({
-    boldText: {
-        color: "snow",
-        fontSize: screenWidth * 0.09,
-        fontWeight: "bold",
-        margin: screenWidth * 0.05,
-        textAlign: "center",
-        shadowColor: "#000000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.4,
-        shadowRadius: 5.84,
-    },
-    innerText: {
-        color: "snow",
-        textAlign: "center",
-        fontSize: screenWidth * 0.05,
-        padding: screenWidth * 0.03,
-        shadowColor: "#000000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.8,
-        shadowRadius: 5.84,
-    },
-})
