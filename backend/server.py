@@ -20,15 +20,13 @@ def main() -> None:
     logger.info("Starting server...")
     settings = get_settings()
     app_instance = (
-        app
-        if not __debug__
-        else f"{os.path.basename(__file__).split('.')[0]}:app"
+        app if not __debug__ else f"{os.path.basename(__file__).split('.')[0]}:app"
     )
 
     uvicorn.run(
         app=app_instance,
         host=settings.server_ip,
-        port=settings.port,
+        port=settings.server_port,
         reload=__debug__,
     )
 
