@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
 import { Button } from '@rneui/base';
+import * as Haptics from 'expo-haptics';
 import { ENV } from '../../backend/config/env';
 import styles from '../styles/LetterStyles';
 import * as FileSystem from 'expo-file-system';
@@ -14,10 +15,8 @@ import { Asset } from 'expo-asset';
 const Letter = () => {
     const [permissionResponse, requestPermission] = Audio.usePermissions();
     const confettiRef = useRef(null);
-    const [confettiTrue, setConfettiTrue] = useState(false);
     const recFirst = useRef(null);
     const confettiRefFalse = useRef(null);
-    const [confettiFalse, setConfettiFalse] = useState(false);
     const [activeLetter, setActiveLetter] = useState(null);
     const [sound, setSound] = useState(null);
     const [recording, setRecording] = useState(null);
@@ -31,19 +30,6 @@ const Letter = () => {
     const SERVER_PATH_UPLOAD = 'upload';
     const fileType = 'audio/m4a';
 
-    useEffect(() => {
-        if (confettiTrue) {
-            if (confettiRef.current) {
-                confettiRef.current.play(0);
-                const timeout = setTimeout(() => {
-                    setConfettiTrue(false); // Reset the state
-                }, 2000); // Adjust the timeout to match the animation duration
-
-                return () => clearTimeout(timeout); // Cleanup the timeout
-            }
-        }
-    }, [confettiTrue]);
-    // // Function to fade in
     const fadeIn = () => {
         Animated.timing(fadeAnim, {
             toValue: 1, // Fade in to fully visible
@@ -58,7 +44,7 @@ const Letter = () => {
             // After the Lottie animation finishes, fade out
             setTimeout(() => {
                 fadeOut();
-            }, 900); // Wait 2 seconds before fading out
+            }, 950); // Wait 2 seconds before fading out
         });
     };
 
@@ -71,15 +57,25 @@ const Letter = () => {
         }).start();
     };
 
-    // Trigger the animation when `confettiFalse` changes
-    useEffect(() => {
-        if (confettiFalse) {
-            fadeIn(); // Start the fade-in animation
+    async function answerCorrect() {
+        if (confettiRef.current) {
+            // await Haptics.impactAsync(Haptics.NotificationFeedbackType.Success)
+            confettiRef.current.play(0);
         }
-    }, [confettiFalse]);
+    }
 
+    async function answerWrong() {
+        fadeIn()
+        // await Haptics.impactAsync(Haptics.NotificationFeedbackType.Error)
+    }
 
-
+    function answerAlert(isCorrect) {
+        if (isCorrect) {
+            answerCorrect()
+        } else {
+            answerWrong()
+        }
+    }
 
     const [imageList] = useState([
         {
@@ -187,85 +183,45 @@ const Letter = () => {
         },
     ];
 
-    // const folderPath = `${FileSystem.documentDirectory}MOEHE-app/`;
-
-    // const createFolder = async () => {
-    //     try {
-    //         const folderInfo = await FileSystem.getInfoAsync(folderPath);
-    //         if (!folderInfo.exists) {
-    //             await FileSystem.makeDirectoryAsync(folderPath, { intermediates: true });
-    //             console.log("Folder created:", folderPath);
-    //         } else {
-    //             console.log("Folder already exists:", folderPath);
-    //         }
-    //     } catch (error) {
-    //         console.error("Error creating folder:", error);
-    //     }
-    // };
-
-    // const saveAudioFiles = async (audioUris) => {
-    //     try {
-    //         await createFolder(); // Ensure the folder exists
-
-    //         for (const [index, audioUri] of audioUris.entries()) {
-    //             const fileName = `audio_${index + 1}.mp3`; // Example file name
-    //             const destinationUri = `${folderPath}${fileName}`;
-
-    //             await FileSystem.copyAsync({
-    //                 from: audioUri,
-    //                 to: destinationUri,
-    //             });
-    //             console.log(`Audio file saved: ${destinationUri}`);
-    //         }
-    //     } catch (error) {
-    //         console.error("Error saving audio files:", error);
-    //     }
-    // };
-
-    // saveAudioFiles(audioURIs)
-
     const playSound = async (audioFile) => {
-        try {
-            // Pause or resume the currently playing sound
-            if (sound) {
-                const status = await sound.getStatusAsync();
-                if (status.isPlaying) {
-                    await sound.pauseAsync();
-                    setIsPlaying(false);
-                } else {
-                    await sound.playAsync();
-                    setIsPlaying(true);
-                }
-            } else {
-                // Load and play a new sound
-                console.log("Audio file:", audioFile);
-
-                const soundObject =
-                    typeof audioFile === "string" ? { uri: audioFile } : audioFile;
-
-                const { sound: newSound } = await Audio.Sound.createAsync(soundObject, {
-                    shouldPlay: true,
-                });
-
-                setSound(newSound);
-                setIsPlaying(true);
-
-                // Listen to the playback status to reset `isPlaying` when the sound finishes
-                newSound.setOnPlaybackStatusUpdate((status) => {
-                    if (status.didJustFinish) {
-                        setIsPlaying(false);
-                        setSound(null); // Unload the sound
-                    }
-                });
-            }
-        } catch (error) {
-            recFirst.current.play();
-            console.error("Error playing sound:", error.message, error);
-            // Alert.alert(
-            //     "No audio found",
-            //     "Please record first🙁"
-            // );
+        if (!audioFile) {
+            recFirst.current.play()
+            return
         }
+
+        // Pause or resume the currently playing sound
+        if (sound) {
+            const status = await sound.getStatusAsync();
+            if (status.isPlaying) {
+                await sound.pauseAsync();
+                setIsPlaying(false);
+            } else {
+                await sound.playAsync();
+                setIsPlaying(true);
+            }
+        } else {
+            // Load and play a new sound
+            console.log("Audio file:", audioFile);
+
+            const soundObject =
+                typeof audioFile === "string" ? { uri: audioFile } : audioFile;
+
+            const { sound: newSound } = await Audio.Sound.createAsync(soundObject, {
+                shouldPlay: true,
+            });
+
+            setSound(newSound);
+            setIsPlaying(true);
+
+            // Listen to the playback status to reset `isPlaying` when the sound finishes
+            newSound.setOnPlaybackStatusUpdate((status) => {
+                if (status.didJustFinish) {
+                    setIsPlaying(false);
+                    setSound(null); // Unload the sound
+                }
+            });
+        }
+
     };
 
 
@@ -275,29 +231,6 @@ const Letter = () => {
     };
 
 
-
-    // function triggerConfetti() {
-    //     if (confettiTrue) {
-    //         if (confettiRef.current) {
-    //             confettiRef.current.play(0)
-    //         }
-    //     }
-    // }
-    // // triggerConfetti()
-    // const triggerRecFirst = () => {
-    //     if (recFirst.current) {
-    //         recFirst.current.play(0)
-    //     }
-    // }
-    // function triggerConfettiFalse() {
-    //     if (confettiFalse) {
-
-    //         if (confettiRefFalse.current) {
-    //             confettiRefFalse.current.play(0)
-    //         }
-    //     }
-    // }
-    // triggerConfettiFalse()
 
     async function startRecording() {
         try {
@@ -355,6 +288,7 @@ const Letter = () => {
             });
 
             if (response.ok) {
+                answerAlert(true)
                 console.log('File uploaded successfully');
             } else {
                 console.error('Failed to upload file');
@@ -463,7 +397,8 @@ const Letter = () => {
                                         styles.letterButton,
                                         activeLetter === letter.char && styles.activeLetter
                                     ]}
-                                    onPress={() => handleLetterPress(letter)}
+                                    onPress={() => [handleLetterPress(letter), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium
+                                    )]}
                                 >
                                     <Text style={styles.letterText}>{letter.char}</Text>
                                 </TouchableOpacity>
@@ -474,7 +409,7 @@ const Letter = () => {
 
                                             <TouchableOpacity
                                                 style={styles.actionButton}
-                                                onPress={() => playSound(letter.audioFiles[0])}
+                                                onPress={() => [playSound(letter.audioFiles[0]), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
                                             >
                                                 <Icon name="volume-high" size={30} color="#573499" />
                                             </TouchableOpacity>
@@ -488,8 +423,18 @@ const Letter = () => {
                                                     resizeMode='cover'
                                                 />
                                                 <TouchableOpacity style={[styles.actionButton, styles.micButton]}
-                                                    onPress={recording ? () => stopRecording(letter.audioFiles[1], letter.char) : startRecording}>
-                                                    {/* <Icon name="mic" size={30} color={recording ? "#3D9E34FF" : "#573499"} /> */}
+                                                    onPress={async () => {
+                                                        // Trigger haptic feedback
+                                                        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+
+                                                        // Handle recording logic
+                                                        if (recording) {
+                                                            await stopRecording(letter.audioFiles[1], letter.char);
+                                                        } else {
+                                                            await startRecording();
+                                                        }
+                                                    }}>
+
                                                     {recording ?
                                                         <Icon name="stop" size={30} color="#DC2626FF" /> :
                                                         <Icon name="mic" size={30} color="#573499" />
@@ -502,7 +447,7 @@ const Letter = () => {
                                                 // onPress={playRecordedAudio}  // TODO: Use PlaySound() instead
 
                                                 // onPress={() => playSound(letter.audioFiles[2])}
-                                                onPress={() => playSound(letter.charURI)}
+                                                onPress={() => [playSound(letter.charURI), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
                                             >
                                                 <Icon name={isPlaying ? "pause" : "play"} size={30} color={isPlaying ? "#3D9E34FF" : "#573499"} />
                                             </TouchableOpacity>
@@ -512,7 +457,7 @@ const Letter = () => {
                             </View>
                         ))}
                         <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                            <Button title="True" onPress={() => setConfettiTrue(true)} />
+                            {/* <Button title="True" onPress={() => setConfettiTrue(true)} /> */}
                             {/* <Button title="false" onPress={triggerConfettiFalse} /> */}
                         </View>
                     </View>
