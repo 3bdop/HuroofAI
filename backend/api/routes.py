@@ -11,8 +11,10 @@ from schemas import AudioUploadModel, InferenceModel
 from services.ai import SpeechRecognition
 from core.config import get_settings
 from typing import Annotated
+from utils import init_logging_config
 
 
+init_logging_config()
 settings = get_settings()
 
 
@@ -34,8 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 logger.info("loading model...")
-
-
+get_model_service()
 logger.info("model loaded successfully!")
 
 
