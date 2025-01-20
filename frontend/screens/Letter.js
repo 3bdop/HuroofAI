@@ -13,15 +13,15 @@ import Constants from 'expo-constants';
 const Letter = () => {
     const [permissionResponse, requestPermission] = Audio.usePermissions();
     const [audioCache, setAudioCache] = useState({});
-    const confettiRef = useRef(null);
+    const refCorrect = useRef(null);
     const recFirst = useRef(null);
-    const confettiRefFalse = useRef(null);
+    const refWrong = useRef(null);
     const [activeLetter, setActiveLetter] = useState(null);
     const [sound, setSound] = useState(null);
     const [recording, setRecording] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
-    const fadeAnim = useRef(new Animated.Value(0)).current; // Initial opacity value
-    const fadeAnim2 = useRef(new Animated.Value(0)).current; // Initial opacity value
+    const fadeAnimCorrect = useRef(new Animated.Value(0)).current; // Initial opacity value
+    const fadeAnimWrong = useRef(new Animated.Value(0)).current; // Initial opacity value
 
     const { width: ScreenWidth, height: ScreenHeight } = Dimensions.get('window');
 
@@ -31,52 +31,51 @@ const Letter = () => {
     const SERVER_PORT = Constants.expoConfig.extra.serverPort;
 
     const fadeInCorrect = () => {
-        fadeAnim2.setValue(0);
-
-
-        Animated.timing(fadeAnim2, {
+        fadeAnimWrong.setValue(0.5);
+        Animated.timing(fadeAnimWrong, {
             toValue: 1, // Fade in to fully visible
-            duration: 500, // Duration of the fade-in animation
+            duration: 20, // Duration of the fade-in animation
             useNativeDriver: true, // Use native driver for better performance
         }).start(() => {
             // After fade-in, start the Lottie animation
-            if (confettiRef.current) {
-                confettiRef.current.reset();
-                confettiRef.current.play(0);
-            }
+            refCorrect.current.reset();
+            refCorrect.current.play(0);
 
             // After the Lottie animation finishes, fade out
             setTimeout(() => {
-                fadeOut();
+                fadeOutCorrect();
             }, 950); // Wait 2 seconds before fading out
         });
     };
 
-    const fadeIn = () => {
-        fadeAnim.setValue(0);
-
-
-        Animated.timing(fadeAnim, {
+    const fadeInWrong = () => {
+        fadeAnimCorrect.setValue(0);
+        Animated.timing(fadeAnimCorrect, {
             toValue: 1, // Fade in to fully visible
             duration: 500, // Duration of the fade-in animation
             useNativeDriver: true, // Use native driver for better performance
         }).start(() => {
             // After fade-in, start the Lottie animation
-            if (confettiRefFalse.current) {
-                confettiRefFalse.current.reset();
-                confettiRefFalse.current.play(0);
-            }
+            refWrong.current.reset();
+            refWrong.current.play(0);
 
             // After the Lottie animation finishes, fade out
             setTimeout(() => {
-                fadeOut();
+                fadeOutWrong();
             }, 950); // Wait 2 seconds before fading out
         });
     };
 
     // Function to fade out
-    const fadeOut = () => {
-        Animated.timing(fadeAnim, {
+    const fadeOutCorrect = () => {
+        Animated.timing(fadeAnimWrong, {
+            toValue: 0, // Fade out to fully transparent
+            duration: 500, // Duration of the fade-out animation
+            useNativeDriver: true, // Use native driver for better performance
+        }).start();
+    };
+    const fadeOutWrong = () => {
+        Animated.timing(fadeAnimCorrect, {
             toValue: 0, // Fade out to fully transparent
             duration: 500, // Duration of the fade-out animation
             useNativeDriver: true, // Use native driver for better performance
@@ -84,14 +83,13 @@ const Letter = () => {
     };
 
     function answerCorrect() {
-
         Haptics.impactAsync(Haptics.NotificationFeedbackType.Success);
         fadeInCorrect();
     }
 
-    async function answerWrong() {
+    function answerWrong() {
         Haptics.impactAsync(Haptics.NotificationFeedbackType.Error)
-        fadeIn();
+        fadeInWrong();
     }
 
     function answerAlert(isCorrect) {
@@ -412,7 +410,7 @@ const Letter = () => {
                 <View style={{ justifyContent: 'center', alignItems: 'center', }}>
 
                     <Animated.View style={{
-                        opacity: fadeAnim,
+                        opacity: fadeAnimCorrect,
                         width: ScreenWidth * 0.65, // Match the LottieView width
                         height: ScreenHeight * 0.3, // Match the LottieView height
                         position: 'absolute',
@@ -422,7 +420,7 @@ const Letter = () => {
                         pointerEvents: 'none',
                     }}>
                         <LottieView
-                            ref={confettiRefFalse}
+                            ref={refWrong}
                             source={require("../assets/animations/false.json")}
                             loop={false}
                             style={styles.lottieF}
@@ -511,7 +509,7 @@ const Letter = () => {
 
             </LinearGradient>
             <LottieView
-                ref={confettiRef}
+                ref={refCorrect}
                 source={require("../assets/animations/animation.json")}
                 style={styles.lottie}
                 loop={false}
