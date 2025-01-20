@@ -57,6 +57,7 @@ const Letter = () => {
 
     async function answerCorrect() {
         if (confettiRef.current) {
+            console.log(confettiRef.current)
             // await Haptics.impactAsync(Haptics.NotificationFeedbackType.Success)
             confettiRef.current.play(0);
         }
@@ -188,6 +189,7 @@ const Letter = () => {
             audioFiles: [
                 "../assets/audio/siin.mp3",
                 "../uploads/siinOut.wav",
+                require("../assets/audio/siin.mp3"),
             ],
         },
 
@@ -197,6 +199,7 @@ const Letter = () => {
             audioFiles: [
                 "../assets/audio/shiin.mp3",
                 "../uploads/shiinOut.wav",
+                require("../assets/audio/shiin.mp3"),
             ],
         },
 
@@ -206,6 +209,7 @@ const Letter = () => {
             audioFiles: [
                 "../assets/audio/ra.mp3",
                 "../uploads/raOut.wav",
+                require("../assets/audio/ra.mp3"),
             ],
         },
 
@@ -215,6 +219,7 @@ const Letter = () => {
             audioFiles: [
                 "../assets/audio/kaf.mp3",
                 "../uploads/kafOut.wav",
+                require("../assets/audio/kaf.mp3"),
             ],
         },
     ];
@@ -511,7 +516,7 @@ const Letter = () => {
 
                                             <TouchableOpacity
                                                 style={styles.actionButton}
-                                                onPress={() => [playSound(letter.audioFiles[1]), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
+                                                onPress={() => [playSound(letter.audioFiles[2]), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
                                             >
                                                 <Icon name="volume-high" size={30} color="#573499" />
                                             </TouchableOpacity>

@@ -1,13 +1,15 @@
 import logging
 import os
 import uuid
-
+from utils import init_logging_config
 import aiofiles
 import torch
 from errors import TranscriptionException
 from fastapi import APIRouter, Depends
 from schemas import AudioUploadModel, InferenceModel
 from services.ai import SpeechRecognition
+
+init_logging_config()
 
 rootpath: str = os.path.dirname(os.path.abspath("."))
 

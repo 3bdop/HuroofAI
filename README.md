@@ -27,44 +27,59 @@ Follow these steps to get the project up and running:
 
 1. **Clone the repository:**
 
-    ```bash
-    git clone https://github.com/3bdop/MOEHE-.git
-    ```
+   ```bash
+   git clone https://github.com/3bdop/MOEHE-.git
+   ```
 
 2. **Install dependencies:**
 
-    ```bash
-    npm install
-    ```
+   ```bash
+   npm install
+   ```
 
 3. **Start the client:**
 
-    ```bash
-    npx expo start
-    ```
+   ```bash
+   npx expo start
+   ```
 
 4. **Start the server:**
 
-    For a standard start:
+   For a standard start:
 
-    ```bash
-    node server.js
-    ```
+   ```bash
+   node server.js
+   ```
 
-    For debugging and live refresh:
+   For debugging and live refresh:
 
-    ```bash
-    nodemon server.js
-    ```
+   ```bash
+   nodemon server.js
+   ```
 
-    > **Note**: Install `nodemon` globally if you haven't already:
-    > ```bash
-    > npm install -g nodemon
-    >```
+   > **Note**: Install `nodemon` globally if you haven't already:
+   >
+   > ```bash
+   > npm install -g nodemon
+   > ```
 
-5. **Download the Expo Go app** on your mobile device.
+5. **Start main.py (FastAPI):**
 
-6. **Scan the QR code** provided by Expo to run the app on your device.
+   For standard start
+
+   ```bash
+   python backend/app/main.py
+   ```
+
+   For debugging and live refresh
+
+   ```bash
+   uvicorn backend.app.main:app --reload
+   ```
+
+6. **Download the Expo Go app** on your mobile device.
+
+7. **Scan the QR code** provided by Expo to run the app on your device.
 
 <br/>
 
@@ -74,8 +89,8 @@ During development, you need to create an `env.js` file inside the [`config/`](.
 
 ```javascript
 export const ENV = {
-    SERVER_IP: '<your_server_ip_here>',
-    SERVER_PORT: '<your_server_port_here>',
+  SERVER_IP: "<your_server_ip_here>",
+  SERVER_PORT: "<your_server_port_here>",
 };
 ```
 
@@ -87,33 +102,33 @@ Follow these steps to set up the Python environment for model development:
 
 1. **Create a virtual environment:**
 
-    For Windows:
+   For Windows:
 
-    ```bash
-    python -m venv .venv
-    .\.venv\Scripts\activate.bat
-    ```
+   ```bash
+   python -m venv .venv
+   .\.venv\Scripts\activate.bat
+   ```
 
-    For Linux/macOS:
+   For Linux/macOS:
 
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate
-    ```
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   ```
 
 2. **Install Python dependencies:**
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 3. **Run Jupyter Notebooks:**
 
-    ```bash
-    jupyter notebook
-    ```
+   ```bash
+   jupyter notebook
+   ```
 
-    > **Note**: You can also use Jupyter notebooks directly within VSCode. Install the [Jupyter extension for VSCode](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter) and open your notebooks in the editor.
+   > **Note**: You can also use Jupyter notebooks directly within VSCode. Install the [Jupyter extension for VSCode](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter) and open your notebooks in the editor.
 
 <br/>
 
