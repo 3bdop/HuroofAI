@@ -82,6 +82,8 @@ async def upload(
         model_service,
     )
 
+    os.remove(file_path)
+
     return {
         "message": "File uploaded successfully",
         "filename": unique_filename,
