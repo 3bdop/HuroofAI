@@ -3,8 +3,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    server_ip: str
-    server_port: int
+    # server_ip: str
+    # server_port: int
 
     model_dir: str = "models"
     model_name: str = "wav2vec2_arabic"
