@@ -49,3 +49,4 @@ models/
 .env
 
 recordings/
+app.log

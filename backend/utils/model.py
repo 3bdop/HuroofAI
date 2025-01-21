@@ -1,5 +1,6 @@
 import logging
 import os
+from functools import lru_cache
 
 import torch
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
@@ -7,9 +8,12 @@ from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 from .buckwalter import bw2ar
 
 logger = logging.getLogger()
-root = os.path.dirname(os.path.abspath("."))
+from pathlib import Path
+
+root = Path(__file__).resolve().parent.parent.parent
 
 
+@lru_cache(maxsize=1)
 def load_model(modeldir, modelname, device) -> tuple:
     modelpath = os.path.join(root, modeldir, modelname)
     processorpath = os.path.join(root, modeldir, f"{modelname}_processor")

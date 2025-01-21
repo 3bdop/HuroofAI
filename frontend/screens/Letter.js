@@ -6,8 +6,9 @@ import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import { ENV } from '../../backend/config/env';
 import styles from '../styles/LetterStyles';
+import Constants from 'expo-constants';
+
 
 const Letter = () => {
     const [permissionResponse, requestPermission] = Audio.usePermissions();
@@ -20,15 +21,41 @@ const Letter = () => {
     const [recording, setRecording] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current; // Initial opacity value
+    const fadeAnim2 = useRef(new Animated.Value(0)).current; // Initial opacity value
 
     const { width: ScreenWidth, height: ScreenHeight } = Dimensions.get('window');
 
-    const SERVER_PORT = ENV.SERVER_PORT;
-    const SERVER_IP = ENV.SERVER_IP;
+
     const SERVER_PATH_UPLOAD = 'uploads';
-    const fileType = 'audio/m4a';
+    const SERVER_IP = Constants.expoConfig.extra.serverIp;
+    const SERVER_PORT = Constants.expoConfig.extra.serverPort;
+
+    const fadeInCorrect = () => {
+        fadeAnim2.setValue(0);
+
+
+        Animated.timing(fadeAnim2, {
+            toValue: 1, // Fade in to fully visible
+            duration: 500, // Duration of the fade-in animation
+            useNativeDriver: true, // Use native driver for better performance
+        }).start(() => {
+            // After fade-in, start the Lottie animation
+            if (confettiRef.current) {
+                confettiRef.current.reset();
+                confettiRef.current.play(0);
+            }
+
+            // After the Lottie animation finishes, fade out
+            setTimeout(() => {
+                fadeOut();
+            }, 950); // Wait 2 seconds before fading out
+        });
+    };
 
     const fadeIn = () => {
+        fadeAnim.setValue(0);
+
+
         Animated.timing(fadeAnim, {
             toValue: 1, // Fade in to fully visible
             duration: 500, // Duration of the fade-in animation
@@ -36,7 +63,8 @@ const Letter = () => {
         }).start(() => {
             // After fade-in, start the Lottie animation
             if (confettiRefFalse.current) {
-                confettiRefFalse.current.play();
+                confettiRefFalse.current.reset();
+                confettiRefFalse.current.play(0);
             }
 
             // After the Lottie animation finishes, fade out
@@ -55,25 +83,20 @@ const Letter = () => {
         }).start();
     };
 
-    async function answerCorrect() {
-        if (confettiRef.current) {
-            console.log(confettiRef.current)
-            // await Haptics.impactAsync(Haptics.NotificationFeedbackType.Success)
-            confettiRef.current.play(0);
-        }
+    function answerCorrect() {
+
+        Haptics.impactAsync(Haptics.NotificationFeedbackType.Success);
+        fadeInCorrect();
     }
 
     async function answerWrong() {
-        fadeIn()
-        // await Haptics.impactAsync(Haptics.NotificationFeedbackType.Error)
+        Haptics.impactAsync(Haptics.NotificationFeedbackType.Error)
+        fadeIn();
     }
 
     function answerAlert(isCorrect) {
-        if (isCorrect) {
-            answerCorrect()
-        } else {
-            answerWrong()
-        }
+        console.log(isCorrect);
+        isCorrect ? answerCorrect() : answerWrong();
     }
 
     const [imageList] = useState([
@@ -123,71 +146,13 @@ const Letter = () => {
             }
             : undefined;
     }, [sound]);
-    // console.log(require('../uploads/kafOut.m4a'))
 
-    //TODO MultiSession, should config it later
-    const [recordedURIs, setRecordedURIs] = useState(null); // Store the URI of the recorded audio
-    const [recordedURIsh, setRecordedURIsh] = useState(null); // Store the URI of the recorded audio
-    const [recordedURIr, setRecordedURIr] = useState(null); // Store the URI of the recorded audio
-    const [recordedURIk, setRecordedURIk] = useState(null); // Store the URI of the recorded audio
-    const audioURIs = [
-        recordedURIs,
-        recordedURIsh,
-        recordedURIr,
-        recordedURIk
-    ]
-    // const letters = [
-    //     {
-    //         char: "س",
-    //         charURI: recordedURIs,
-    //         audioFiles: [
-    //             require("../assets/audio/siin.mp3"),
-    //             "../../backend/uploads/siinOut.m4a",
-    //             "../../backend/uploads/siinOut.mp3",
-    //             // { uri: "../../backend/uploads/siinOut.mp3" },
-    //         ],
-    //     },
-
-    //     {
-    //         char: "ش",
-    //         charURI: recordedURIsh,
-    //         audioFiles: [
-    //             require("../assets/audio/shiin.mp3"),
-    //             "../../backend/uploads/shiinOut.m4a",
-    //             "../../backend/uploads/shiinOut.mp3",
-    //             // { uri: "../../backend/uploads/shiinOut.mp3" },
-    //         ],
-    //     },
-
-    //     {
-    //         char: "ر",
-    //         charURI: recordedURIr,
-    //         audioFiles: [
-    //             require("../assets/audio/ra.mp3"),
-    //             "../../backend/uploads/raOut.m4a",
-    //             "../../backend/uploads/raOut.mp3",
-    //             // { uri: "../../backend/uploads/raOut.mp3" },
-    //         ],
-    //     },
-
-    //     {
-    //         char: "ك",
-    //         charURI: recordedURIk,
-    //         audioFiles: [
-    //             require("../assets/audio/kaf.mp3"),
-    //             "../../backend/uploads/kafOut.m4a",
-    //             "../../backend/uploads/kafOut.mp3",
-    //             // { uri: "../../backend/uploads/kafOut.mp3" },
-    //         ],
-    //     },
-    // ];
 
     const letters = [
         {
             char: "س",
-            charURI: recordedURIs,
             audioFiles: [
-                "../assets/audio/siin.mp3",
+                require("../assets/audio/siin.mp3"),
                 "../uploads/siinOut.wav",
                 require("../assets/audio/siin.mp3"),
             ],
@@ -195,9 +160,8 @@ const Letter = () => {
 
         {
             char: "ش",
-            charURI: recordedURIsh,
             audioFiles: [
-                "../assets/audio/shiin.mp3",
+                require("../assets/audio/shiin.mp3"),
                 "../uploads/shiinOut.wav",
                 require("../assets/audio/shiin.mp3"),
             ],
@@ -205,9 +169,8 @@ const Letter = () => {
 
         {
             char: "ر",
-            charURI: recordedURIr,
             audioFiles: [
-                "../assets/audio/ra.mp3",
+                require("../assets/audio/ra.mp3"),
                 "../uploads/raOut.wav",
                 require("../assets/audio/ra.mp3"),
             ],
@@ -215,19 +178,39 @@ const Letter = () => {
 
         {
             char: "ك",
-            charURI: recordedURIk,
             audioFiles: [
-                "../assets/audio/kaf.mp3",
+                require("../assets/audio/kaf.mp3"),
                 "../uploads/kafOut.wav",
                 require("../assets/audio/kaf.mp3"),
             ],
         },
     ];
     const playSound = async (audioFile) => {
+        if (recording) {
+            console.log("WAIT DUMBASS YOU STILL RECORDING");
+            return;
+        }
+
+        // audio mode to speaker output BEFORE playing
+        await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            playsInSilentModeIOS: true,
+            shouldDuckAndroid: true,
+            playThroughEarpieceAndroid: false,
+            staysActiveInBackground: true,
+        });
+
         if (!audioFile) {
             recFirst.current.play()
             return
         }
+        console.log("PLAY")
+        const cachedAudio = audioCache[audioFile] || await AsyncStorage.getItem(audioFile) || audioFile;
+        console.log(cachedAudio);
+        if (!cachedAudio) {
+            throw new Error('Audio file not found in cache');
+        }
+
 
         // Pause or resume the currently playing sound
         if (sound) {
@@ -244,7 +227,7 @@ const Letter = () => {
             console.log("Audio file:", audioFile);
 
             const soundObject =
-                typeof audioFile === "string" ? { uri: audioFile } : audioFile;
+                typeof cachedAudio === "string" ? { uri: cachedAudio } : cachedAudio;
 
             const { sound: newSound } = await Audio.Sound.createAsync(soundObject, {
                 shouldPlay: true,
@@ -374,7 +357,6 @@ const Letter = () => {
             console.log('Response: ', result);
 
             const isCorrect = result.inference_result.is_correct;
-            // const alertMessage = isCorrect ? 'Your recording was correct!' : 'Your recording was incorrect. Please try again.';
             answerAlert(isCorrect);
             return result;
 
@@ -384,43 +366,7 @@ const Letter = () => {
     };
 
 
-    // Call this function after recording is stopped
-    // const stopRecording = async (audioFile, char) => {
-    //     try {
-    //         // Stop and unload the recording
-    //         await recording.stopAndUnloadAsync();
-    //         const uri = recording.getURI();
-    //         console.log("Recording stopped and stored at", audioFile);
-
-    //         // Upload the recorded file to the server
-    //         console.log(audioFile);
-    //         await uploadRecording(uri, audioFile);
-    //         console.log(uri);
-    //         switch (char) {
-    //             case "س":
-    //                 setRecordedURIs(uri);
-
-    //                 break;
-    //             case "ش":
-    //                 setRecordedURIsh(uri);
-
-    //                 break;
-    //             case "ر":
-    //                 setRecordedURIr(uri);
-
-    //                 break;
-
-    //             default:
-    //                 setRecordedURIk(uri);
-    //                 break;
-    //         }
-    //         // Clear the recording state AFTER upload
-    //         setRecording(null);
-    //     } catch (error) {
-    //         console.error("Error stopping recording:", error);
-    //     }
-    // };
-    const stopRecording = async (audioFile, char) => {
+    const stopRecording = async (audioFile) => {
         try {
             await recording.stopAndUnloadAsync();
             const uri = recording.getURI();
@@ -516,7 +462,7 @@ const Letter = () => {
 
                                             <TouchableOpacity
                                                 style={styles.actionButton}
-                                                onPress={() => [playSound(letter.audioFiles[2]), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
+                                                onPress={() => [playSound(letter.audioFiles[0]), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
                                             >
                                                 <Icon name="volume-high" size={30} color="#573499" />
                                             </TouchableOpacity>
@@ -536,7 +482,7 @@ const Letter = () => {
 
                                                         // Handle recording logic
                                                         if (recording) {
-                                                            await stopRecording(letter.audioFiles[1], letter.char);
+                                                            await stopRecording(letter.audioFiles[1]);
                                                         } else {
                                                             await startRecording();
                                                         }
@@ -551,10 +497,6 @@ const Letter = () => {
 
                                             <TouchableOpacity
                                                 style={styles.actionButton}
-                                                // onPress={playRecordedAudio}  // TODO: Use PlaySound() instead
-
-                                                // onPress={() => playSound(letter.audioFiles[2])}
-                                                // onPress={() => [playSound(letter.charURI), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
                                                 onPress={() => [playSound(letter.audioFiles[1]), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
                                             >
                                                 <Icon name={isPlaying ? "pause" : "play"} size={30} color={isPlaying ? "#3D9E34FF" : "#573499"} />
