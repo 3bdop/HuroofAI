@@ -2,19 +2,20 @@ import logging
 import os
 import uuid
 from functools import lru_cache
+from typing import Annotated
 
 import aiofiles
 import torch
+from core.config import get_settings
 from errors import TranscriptionException
 from fastapi import APIRouter, Depends
 from schemas import AudioUploadModel, InferenceModel
 from services.ai import SpeechRecognition
-from core.config import get_settings
-from typing import Annotated
-from utils import init_logging_config
+
+# from utils import init_logging_config
 
 
-init_logging_config()
+# init_logging_config()
 settings = get_settings()
 
 
@@ -32,13 +33,6 @@ ModelService = Annotated[SpeechRecognition, Depends(get_model_service)]
 
 router = APIRouter()
 
-logger = logging.getLogger(__name__)
-
-
-logger.info("loading model...")
-get_model_service()
-logger.info("model loaded successfully!")
-
 
 @router.post("/inferences")
 async def infer(
@@ -49,8 +43,8 @@ async def infer(
         predicted_text: str = model_service.transcribe(
             os.path.join("recordings/", record.recordpath)
         )
-    except Exception as e:
-        logger.error(f"Error during transcription: {e}")
+    except Exception:
+        # logging.error(f"Error during transcription: {e}")
         raise TranscriptionException
 
     confidence = model_service.calculate_confidence(predicted_text, record.correct)
