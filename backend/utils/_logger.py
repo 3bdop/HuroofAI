@@ -36,8 +36,6 @@ def get_handlers(
     file_handler.setLevel(file_level)
     file_handler.setFormatter(CustomFormatter(True))
 
-    # TODO: Add RotatingFileHandler
-
     return stderr_handler, file_handler
 
 
@@ -143,4 +141,3 @@ def init_logging_config(
     # Add the handlers
     logger.addHandler(stderr_handler)
     logger.addHandler(file_handler)
-

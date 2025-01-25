@@ -2,10 +2,10 @@ import logging
 import os
 
 import uvicorn
+from api.routes import get_model_service
 from api.routes import router as api_router
 from core.config import get_settings
 from fastapi import FastAPI
-from api.routes import get_model_service
 from utils import init_logging_config, warmup_model
 
 init_logging_config()

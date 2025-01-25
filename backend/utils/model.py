@@ -68,7 +68,7 @@ def warmup_model(model) -> None:
     dummy_input = "dummy.wav"
 
     if not os.path.exists(dummy_input):
-        sr = 22050  # Sample rate
+        sr = 22050  # sample rate
         duration = 1.0  # seconds
         silent_audio = np.zeros(int(sr * duration))  # 1 second of silence
         sf.write(dummy_input, silent_audio, sr)
