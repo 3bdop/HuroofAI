@@ -28,7 +28,7 @@ const Letter = () => {
 
     const SERVER_PATH_UPLOAD = 'uploads';
     const SERVER_IP = Constants.expoConfig.extra.serverIp;
-    const SERVER_PORT = Constants.expoConfig.extra.serverPort;
+    // const SERVER_PORT = Constants.expoConfig.extra.serverPort;
 
     const fadeInCorrect = () => {
         fadeAnimWrong.setValue(0.5);
@@ -315,9 +315,9 @@ const Letter = () => {
             throw new Error('Server IP address not set');
         }
 
-        if (!SERVER_PORT) {
-            throw new Error('Server Port not set');
-        }
+        // if (!SERVER_PORT) {
+        //     throw new Error('Server Port not set');
+        // }
 
         if (!SERVER_PATH_UPLOAD) {
             throw new Error('Server Upload Record Path not set');
@@ -327,7 +327,8 @@ const Letter = () => {
         console.log("HERE");
         console.log(audioCache);
         validateServerConfig();
-        const apiUrl = `http://${SERVER_IP}:${SERVER_PORT}/${SERVER_PATH_UPLOAD}`;
+        // const apiUrl = `http://${SERVER_IP}:${SERVER_PORT}/${SERVER_PATH_UPLOAD}`;
+        const apiUrl = `${SERVER_IP}/${SERVER_PATH_UPLOAD}`;
 
         console.log(`Uploading to: ${apiUrl}`);
 
