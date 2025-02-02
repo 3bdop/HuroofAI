@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, ScrollView, Alert, Image, Animated, Dimensions } from 'react-native';
+import { Text, View, TouchableOpacity, ScrollView, Alert, Image, Animated, Dimensions, TouchableNativeFeedback, Platform } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -11,6 +11,8 @@ import Constants from 'expo-constants';
 
 
 const Letter = () => {
+    // const ButtonComponent = Platform.OS === 'android' ? TouchableNativeFeedback : TouchableOpacity;
+
     const [permissionResponse, requestPermission] = Audio.usePermissions();
     const [audioCache, setAudioCache] = useState({});
     const confettiRef = useRef(null);
@@ -28,7 +30,7 @@ const Letter = () => {
 
     const SERVER_PATH_UPLOAD = 'uploads';
     const SERVER_IP = Constants.expoConfig.extra.serverIp;
-    const SERVER_PORT = Constants.expoConfig.extra.serverPort;
+    // const SERVER_PORT = Constants.expoConfig.extra.serverPort;
 
     const fadeInCorrect = () => {
         fadeAnim2.setValue(0);
@@ -321,9 +323,9 @@ const Letter = () => {
             throw new Error('Server IP address not set');
         }
 
-        if (!SERVER_PORT) {
-            throw new Error('Server Port not set');
-        }
+        // if (!SERVER_PORT) {
+        //     throw new Error('Server Port not set');
+        // }
 
         if (!SERVER_PATH_UPLOAD) {
             throw new Error('Server Upload Record Path not set');
@@ -333,7 +335,9 @@ const Letter = () => {
         console.log("HERE");
         console.log(audioCache);
         validateServerConfig();
-        const apiUrl = `http://${SERVER_IP}:${SERVER_PORT}/${SERVER_PATH_UPLOAD}`;
+        // const apiUrl = `http://${SERVER_IP}:${SERVER_PORT}/${SERVER_PATH_UPLOAD}`;
+        // const apiUrl = `http://${SERVER_IP}/${SERVER_PATH_UPLOAD}`;
+        const apiUrl = `${SERVER_IP}/${SERVER_PATH_UPLOAD}`;
 
         console.log(`Uploading to: ${apiUrl}`);
 
@@ -448,7 +452,7 @@ const Letter = () => {
                                 <TouchableOpacity
                                     style={[
                                         styles.letterButton,
-                                        activeLetter === letter.char && styles.activeLetter
+                                        activeLetter === letter.char && styles.activeLetter,
                                     ]}
                                     onPress={() => [handleLetterPress(letter), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium
                                     )]}

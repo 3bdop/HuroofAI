@@ -1,4 +1,4 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions, Platform } from 'react-native';
 
 const { width: ScreenWidth, height: ScreenHeight } = Dimensions.get('window');
 
@@ -23,15 +23,16 @@ const styles = StyleSheet.create({
     letterWrapper: {
         marginBottom: 15,
         alignItems: 'center',
-        width: '100%',
-        maxWidth: 300,
+        width: ScreenWidth * 0.8,
+        // maxWidth: 300,
     },
     letterButton: {
+        zIndex: 0,
         backgroundColor: '#8A4FFF',
         paddingVertical: 12,
         paddingHorizontal: 25,
         borderRadius: 15,
-        width: '100%',
+        width: ScreenWidth * 0.8,
         alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: {
