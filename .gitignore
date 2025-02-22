@@ -30,9 +30,6 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
-
 # typescript
 *.tsbuildinfo
 
@@ -43,10 +40,9 @@ uploads/*
 config/env.js
 
 __pycache__/
-.env/
 .venv/
 models/
-.env
 
-recordings/
+outputs/
 app.log
+.ruff_cache/
