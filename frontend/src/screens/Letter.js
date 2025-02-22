@@ -4,31 +4,64 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import styles from '../styles/LetterStyles';
-import Constants from 'expo-constants';
+import { LETTERS } from "@config/constants"
+import { useAudio } from "@hooks/useAudio"
+// import { useRecording } from "@hooks/useRecording"
+
+import { uploadAudio } from '../services/api.services';
 
 
 const Letter = () => {
+    const { playSound, isPlaying, setIsPlaying, sound, setSound, cacheAudio, audioCache } = useAudio();
+    // TODO: switch current logic to use the useRecording hook
+    // const { recording, startRecording, stopRecording } = useRecording();
+
+    // const handleRecordPress = async () => {
+    //     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+    //     if (recording) {
+    //         const uri = await stopRecording();
+
+    //         if (uri) {
+    //             await uploadRecording(uri, activeLetter);
+    //         }
+    //     } else {
+    //         await startRecording();
+    //     }
+    // }
+
     const [permissionResponse, requestPermission] = Audio.usePermissions();
-    const [audioCache, setAudioCache] = useState({});
     const refCorrect = useRef(null);
     const recFirst = useRef(null);
     const refWrong = useRef(null);
     const [activeLetter, setActiveLetter] = useState(null);
-    const [sound, setSound] = useState(null);
     const [recording, setRecording] = useState(null);
-    const [isPlaying, setIsPlaying] = useState(false);
     const fadeAnimCorrect = useRef(new Animated.Value(0)).current; // Initial opacity value
     const fadeAnimWrong = useRef(new Animated.Value(0)).current; // Initial opacity value
 
     const { width: ScreenWidth, height: ScreenHeight } = Dimensions.get('window');
 
+    const [imageList] = useState([
+        {
+            id: '1',
+            image: require('../../assets/letters/siin.png')
+        },
+        {
+            id: '2',
+            image: require('../../assets/letters/shiin.png')
+        },
+        {
+            id: '3',
+            image: require('../../assets/letters/ra.png')
+        },
+        {
+            id: '4',
+            image: require('../../assets/letters/kaaf.png')
+        }
+    ]);
 
-    const SERVER_PATH_UPLOAD = 'uploads';
-    const SERVER_IP = Constants.expoConfig.extra.serverIp;
-    const SERVER_PORT = Constants.expoConfig.extra.serverPort;
+
 
     const fadeInCorrect = () => {
         fadeAnimWrong.setValue(0.5);
@@ -82,40 +115,20 @@ const Letter = () => {
         }).start();
     };
 
-    function answerCorrect() {
+    const answerCorrect = () => {
         Haptics.impactAsync(Haptics.NotificationFeedbackType.Success);
         fadeInCorrect();
     }
 
-    function answerWrong() {
+    const answerWrong = () => {
         Haptics.impactAsync(Haptics.NotificationFeedbackType.Error)
         fadeInWrong();
     }
 
-    function answerAlert(isCorrect) {
+    const answerAlert = (isCorrect) => {
         console.log(isCorrect);
         isCorrect ? answerCorrect() : answerWrong();
     }
-
-    const [imageList] = useState([
-        {
-            id: '1',
-            image: require('../assets/letters/siin.png')
-        },
-        {
-            id: '2',
-            image: require('../assets/letters/shiin.png')
-        },
-        {
-            id: '3',
-            image: require('../assets/letters/ra.png')
-        },
-        {
-            id: '4',
-            image: require('../assets/letters/kaaf.png')
-        }
-    ]);
-
 
     // Initialize audio on component mount
     useEffect(() => {
@@ -146,101 +159,6 @@ const Letter = () => {
     }, [sound]);
 
 
-    const letters = [
-        {
-            char: "س",
-            audioFiles: [
-                require("../assets/audio/siin.mp3"),
-                "../uploads/siinOut.wav",
-            ],
-        },
-
-        {
-            char: "ش",
-            audioFiles: [
-                require("../assets/audio/shiin.mp3"),
-                "../uploads/shiinOut.wav",
-            ],
-        },
-
-        {
-            char: "ر",
-            audioFiles: [
-                require("../assets/audio/ra.mp3"),
-                "../uploads/raOut.wav",
-            ],
-        },
-
-        {
-            char: "ك",
-            audioFiles: [
-                require("../assets/audio/kaf.mp3"),
-                "../uploads/kafOut.wav",
-            ],
-        },
-    ];
-    const playSound = async (audioFile) => {
-        if (recording) {
-            console.log("WAIT DUMBASS YOU STILL RECORDING");
-            return;
-        }
-
-        // audio mode to speaker output BEFORE playing
-        await Audio.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            playsInSilentModeIOS: true,
-            shouldDuckAndroid: true,
-            playThroughEarpieceAndroid: false,
-            staysActiveInBackground: true,
-        });
-
-        if (!audioFile) {
-            recFirst.current.play()
-            return
-        }
-        console.log("PLAY")
-        const cachedAudio = audioCache[audioFile] || await AsyncStorage.getItem(audioFile) || audioFile;
-        console.log(cachedAudio);
-        if (!cachedAudio) {
-            throw new Error('Audio file not found in cache');
-        }
-
-
-        // Pause or resume the currently playing sound
-        if (sound) {
-            const status = await sound.getStatusAsync();
-            if (status.isPlaying) {
-                await sound.pauseAsync();
-                setIsPlaying(false);
-            } else {
-                await sound.playAsync();
-                setIsPlaying(true);
-            }
-        } else {
-            // Load and play a new sound
-            console.log("Audio file:", audioFile);
-
-            const soundObject =
-                typeof cachedAudio === "string" ? { uri: cachedAudio } : cachedAudio;
-
-            const { sound: newSound } = await Audio.Sound.createAsync(soundObject, {
-                shouldPlay: true,
-            });
-
-            setSound(newSound);
-            setIsPlaying(true);
-
-            // Listen to the playback status to reset `isPlaying` when the sound finishes
-            newSound.setOnPlaybackStatusUpdate((status) => {
-                if (status.didJustFinish) {
-                    setIsPlaying(false);
-                    setSound(null); // Unload the sound
-                }
-            });
-        }
-
-    };
-
 
 
     const handleLetterPress = (letter) => {
@@ -255,20 +173,6 @@ const Letter = () => {
         "kafOut.wav": "كاف"
     };
 
-    const cacheFile = async (audioFile, uri) => {
-        try {
-            console.log("@cacheFile");
-            console.log(audioFile);
-            setAudioCache(prevCache => ({ ...prevCache, [audioFile]: uri }));
-            console.log(`File ${audioFile} cached in memory`);
-            console.log(`Check`)
-            await AsyncStorage.setItem(audioFile, uri);
-            console.log(`File ${audioFile} cached successfully with URI: ${uri}`);
-
-        } catch (error) {
-            console.error('Error caching file in memory:', error);
-        }
-    };
     async function startRecording() {
         try {
             if (permissionResponse.status !== 'granted') {
@@ -310,27 +214,7 @@ const Letter = () => {
         }
     }
 
-    const validateServerConfig = () => {
-        if (!SERVER_IP) {
-            throw new Error('Server IP address not set');
-        }
-
-        if (!SERVER_PORT) {
-            throw new Error('Server Port not set');
-        }
-
-        if (!SERVER_PATH_UPLOAD) {
-            throw new Error('Server Upload Record Path not set');
-        }
-    }
     const uploadRecording = async (uri, audioFile) => {
-        console.log("HERE");
-        console.log(audioCache);
-        validateServerConfig();
-        const apiUrl = `http://${SERVER_IP}:${SERVER_PORT}/${SERVER_PATH_UPLOAD}`;
-
-        console.log(`Uploading to: ${apiUrl}`);
-
         const formData = new FormData();
         formData.append('recording', {
             uri: uri,
@@ -340,14 +224,7 @@ const Letter = () => {
         formData.append('correct', correct[audioFile]);
 
         try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-            const result = await response.json();
+            const result = await uploadAudio(formData);
             console.log('Response: ', result);
 
             const isCorrect = result.inference_result.is_correct;
@@ -372,7 +249,8 @@ const Letter = () => {
             const baseName = extractBaseName(audioFile);
             console.log(`Caching ${audioFile}: ${audioCache[audioFile]} from stopRecording...`);
             console.log(audioFile);
-            await cacheFile(audioFile, uri);
+            await cacheAudio(audioFile, uri);
+            await cacheAudio
             console.log(uri);
             console.log(audioCache);
             await uploadRecording(uri, baseName);
@@ -383,6 +261,7 @@ const Letter = () => {
             console.error("Error stopping recording:", error);
         }
     };
+
     return (
         <View style={styles.container}>
             <LinearGradient
@@ -421,7 +300,7 @@ const Letter = () => {
                     }}>
                         <LottieView
                             ref={refWrong}
-                            source={require("../assets/animations/false.json")}
+                            source={require("../../assets/animations/false.json")}
                             loop={false}
                             style={styles.lottieF}
                             resizeMode='cover'
@@ -437,7 +316,7 @@ const Letter = () => {
                 </View>
                 <ScrollView contentContainerStyle={styles.scrollContainer}>
                     <View style={styles.cardsContainer}>
-                        {letters.map((letter, index) => (
+                        {LETTERS.map((letter, index) => (
                             <View key={index} style={styles.letterWrapper}>
                                 <TouchableOpacity
                                     style={[
@@ -456,7 +335,7 @@ const Letter = () => {
 
                                             <TouchableOpacity
                                                 style={styles.actionButton}
-                                                onPress={() => [playSound(letter.audioFiles[0]), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
+                                                onPress={() => [playSound(letter.audioFiles.original), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
                                             >
                                                 <Icon name="volume-high" size={30} color="#573499" />
                                             </TouchableOpacity>
@@ -464,7 +343,7 @@ const Letter = () => {
 
                                                 <LottieView
                                                     ref={recFirst}
-                                                    source={require("../assets/animations/pressRec.json")}
+                                                    source={require("../../assets/animations/pressRec.json")}
                                                     style={styles.lottieP}
                                                     loop={false}
                                                     resizeMode='cover'
@@ -476,11 +355,12 @@ const Letter = () => {
 
                                                         // Handle recording logic
                                                         if (recording) {
-                                                            await stopRecording(letter.audioFiles[1]);
+                                                            await stopRecording(letter.audioFiles.recorded);
                                                         } else {
                                                             await startRecording();
                                                         }
                                                     }}>
+                                                    {/* onPress={handleRecordPress}> */}
 
                                                     {recording ?
                                                         <Icon name="stop" size={30} color="#DC2626FF" /> :
@@ -491,7 +371,7 @@ const Letter = () => {
 
                                             <TouchableOpacity
                                                 style={styles.actionButton}
-                                                onPress={() => [playSound(letter.audioFiles[1]), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
+                                                onPress={() => [playSound(letter.audioFiles.recorded), Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft)]}
                                             >
                                                 <Icon name={isPlaying ? "pause" : "play"} size={30} color={isPlaying ? "#3D9E34FF" : "#573499"} />
                                             </TouchableOpacity>
@@ -510,7 +390,7 @@ const Letter = () => {
             </LinearGradient>
             <LottieView
                 ref={refCorrect}
-                source={require("../assets/animations/animation.json")}
+                source={require("../../assets/animations/animation.json")}
                 style={styles.lottie}
                 loop={false}
                 resizeMode='cover'

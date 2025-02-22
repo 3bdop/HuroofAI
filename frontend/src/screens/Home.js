@@ -46,7 +46,7 @@ const Home = ({ navigation }) => {
                 }}
             >
                 <Image
-                    source={require("../assets/images/Group.png")}
+                    source={require("../../assets/images/Group.png")}
                     style={styles.imageStyle}
                 />
             </Animated.View>
