@@ -18,7 +18,6 @@ export default {
         ],
         ios: {
             supportsTablet: true,
-            bundleIdentifier: "huroof.3bdop"
         },
         android: {
             adaptiveIcon: {
@@ -30,9 +29,7 @@ export default {
             favicon: "./frontend/assets/images/favicon.png",
         },
         extra: {
-            eas: {
-                "projectId": "4d980468-6f75-43b8-bfc7-9b13a05dbecf"
-            },
+
             serverIp: process.env.SERVER_IP,
             serverPort: process.env.SERVER_PORT,
         },
