@@ -5,9 +5,10 @@ transcription and confidence scoring using Levenshtein distance.
 """
 
 import Levenshtein
-import services.ml.model_actions as ma
 import torch
-from utils import load_audio
+
+import app.services.ml.model_actions as ma
+from app.utils import load_audio
 
 
 class SpeechRecognition:

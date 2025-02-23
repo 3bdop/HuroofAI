@@ -5,10 +5,10 @@ inference operations, managing the interaction between clients and the speech
 recognition service.
 """
 
-from api.routes import inference, upload
+from api.routes import inference, upload, utils
 from fastapi import APIRouter
 
 api_router = APIRouter()
-
 api_router.include_router(inference.router, prefix="/infer", tags=["AI"])
 api_router.include_router(upload.router, prefix="/upload", tags=["Backend"])
+api_router.include_router(utils.router, prefix="/utils", tags=["Utils"])

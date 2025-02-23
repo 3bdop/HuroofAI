@@ -13,8 +13,22 @@ Typical usage example:
 """
 
 from functools import lru_cache
+from typing import Annotated, Any
 
+from pydantic import (
+    AnyUrl,
+    BeforeValidator,
+    computed_field,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def parse_cors(v: Any) -> list[str] | str:
+    if isinstance(v, list | str):
+        return v
+    if isinstance(v, str):
+        return [i.strip() for i in v.split(",")]
+    return ValueError(v)
 
 
 class Settings(BaseSettings):
@@ -38,7 +52,14 @@ class Settings(BaseSettings):
         model_config (SettingsConfigDict): Configuration for loading settings.
                     Loads from environment variables and files.
     """
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_ignore_empty=True,
+        extra="ignore",
+        env_file_encoding="utf-8",
+    )
 
+    project_name: str
     server_ip: str
     server_port: int
 
@@ -49,7 +70,16 @@ class Settings(BaseSettings):
     max_upload_size: int = 10_000_000  # 10 MB
     recordings_dir: str = "outputs"
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    backend_cors_origin: Annotated[
+       list[AnyUrl] | str, BeforeValidator(parse_cors)
+    ] = []
+
+    @computed_field
+    @property
+    def all_cors_origin(self) -> list[str]:
+        return [str(origin).rstrip("/") for origin in self.backend_cors_origin]
+
+
 
 
 @lru_cache

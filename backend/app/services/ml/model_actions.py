@@ -12,8 +12,9 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 import torch
-from services.ml.speech_recognition import SpeechRecognition
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+
+from app.services.ml.speech_recognition import SpeechRecognition
 
 from ._buckwalter import bw2ar
 from .save_model import save_model_and_processor
