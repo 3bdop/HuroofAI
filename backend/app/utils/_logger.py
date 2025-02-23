@@ -1,6 +1,9 @@
 """Custom logging module."""
 
 import logging
+import sys
+
+sys.stdout.reconfigure(encoding="utf-8")
 
 
 def get_handlers(
