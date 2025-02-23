@@ -35,10 +35,12 @@ const Letter = () => {
     const refCorrect = useRef(null);
     const recFirst = useRef(null);
     const refWrong = useRef(null);
+    const refMed = useRef(null);
     const [activeLetter, setActiveLetter] = useState(null);
     const [recording, setRecording] = useState(null);
     const fadeAnimCorrect = useRef(new Animated.Value(0)).current; // Initial opacity value
-    const fadeAnimWrong = useRef(new Animated.Value(0)).current; // Initial opacity value
+    const fadeAnimWrong = useRef(new Animated.Value(0)).current; // Initial opacity value\
+    const [flag, setFlag] = useState(null)
 
     const { width: ScreenWidth, height: ScreenHeight } = Dimensions.get('window');
 
@@ -99,6 +101,21 @@ const Letter = () => {
         });
     };
 
+    const fadeInMed = () => {
+        fadeAnimCorrect.setValue(0);
+        Animated.timing(fadeAnimCorrect, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+        }).start(() => {
+            refMed.current.reset();
+            refMed.current.play(0);
+            setTimeout(() => {
+                fadeOutMed(); // Fixed to call fadeOutMed
+            }, 950);
+        });
+    };
+
     // Function to fade out
     const fadeOutCorrect = () => {
         Animated.timing(fadeAnimWrong, {
@@ -108,6 +125,13 @@ const Letter = () => {
         }).start();
     };
     const fadeOutWrong = () => {
+        Animated.timing(fadeAnimCorrect, {
+            toValue: 0, // Fade out to fully transparent
+            duration: 500, // Duration of the fade-out animation
+            useNativeDriver: true, // Use native driver for better performance
+        }).start();
+    };
+    const fadeOutMed = () => {
         Animated.timing(fadeAnimCorrect, {
             toValue: 0, // Fade out to fully transparent
             duration: 500, // Duration of the fade-out animation
@@ -125,9 +149,18 @@ const Letter = () => {
         fadeInWrong();
     }
 
-    const answerAlert = (isCorrect) => {
-        console.log(isCorrect);
-        isCorrect ? answerCorrect() : answerWrong();
+    const answerMed = () => {
+        fadeInMed()
+    }
+
+    const answerAlert = (value) => {
+        console.log(value);
+        if (value === "med") {
+            answerMed()
+        }
+        else {
+            value ? answerCorrect() : answerWrong();
+        }
     }
 
     // Initialize audio on component mount
@@ -228,7 +261,24 @@ const Letter = () => {
             console.log('Response: ', result);
 
             const isCorrect = result.inference_result.is_correct;
-            answerAlert(isCorrect);
+            const confidence = result.inference_result.confidence
+            if (confidence > 49 && confidence < 75) {
+                setFlag("med")
+                answerAlert("med")
+            }
+            else {
+                isCorrect ? answerAlert(true) : answerAlert(false)
+                setFlag(false)
+            }
+            // if (confidence < 50) {
+            //     setFlag(false)
+            //     answerAlert(false);
+            // } else if (confidence >= 50 && confidence <= 74) {
+            //     setFlag("med")
+            //     answerAlert("med");
+            // } else if (confidence >= 75) {
+            //     answerAlert(true);
+            // }
             return result;
 
         } catch (error) {
@@ -299,20 +349,17 @@ const Letter = () => {
                         pointerEvents: 'none',
                     }}>
                         <LottieView
-                            ref={refWrong}
-                            source={require("../../assets/animations/false.json")}
+                            ref={flag === "med" ? refMed : refWrong}
+                            source={flag === "med" ? require("../../assets/animations/medAnim.json") : require("../../assets/animations/false.json")}
                             loop={false}
                             style={styles.lottieF}
                             resizeMode='cover'
                         />
+                        {flag === "med" && (
+                            <Text style={styles.almostCorrectText}>صحيح تقريبا
+                            </Text>
+                        )}
                     </Animated.View>
-                    {/* <LottieView
-                        ref={confettiRefFalse}
-                        source={require("../assets/animations/false.json")}
-                        style={styles.lottieF}
-                        loop={false}
-                        resizeMode='cover'
-                    /> */}
                 </View>
                 <ScrollView contentContainerStyle={styles.scrollContainer}>
                     <View style={styles.cardsContainer}>
@@ -360,7 +407,6 @@ const Letter = () => {
                                                             await startRecording();
                                                         }
                                                     }}>
-                                                    {/* onPress={handleRecordPress}> */}
 
                                                     {recording ?
                                                         <Icon name="stop" size={30} color="#DC2626FF" /> :
@@ -380,10 +426,6 @@ const Letter = () => {
                                 )}
                             </View>
                         ))}
-                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                            {/* <Button title="True" onPress={() => setConfettiTrue(true)} /> */}
-                            {/* <Button title="false" onPress={triggerConfettiFalse} /> */}
-                        </View>
                     </View>
                 </ScrollView>
 
