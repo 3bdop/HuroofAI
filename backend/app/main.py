@@ -31,7 +31,7 @@ app = FastAPI()
 logging.info("Initializing Routes...")
 app.include_router(api_router)
 
-logging.info("Server started 🚀")
+logging.info("Server started")
 
 
 def main() -> None:
@@ -52,7 +52,7 @@ def main() -> None:
         f"{os.path.basename(__file__).split('.')[0]}:app" if __debug__ else app
     )
 
-    logging.info("Server started 🚀")
+    logging.info("Server started")
     uvicorn.run(
         app=app_instance,
         host=settings.server_ip,
