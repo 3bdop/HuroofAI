@@ -27,11 +27,11 @@ logging.info("Warming up the model...")
 ma.warmup(model)
 
 app = FastAPI(
-    title=settings.project_name, 
-    root_path="/", 
-    openapi_url=None, 
-    docs_url=None, 
-    redoc_url=None
+    title=settings.project_name,
+    root_path="/",
+    openapi_url=None,
+    docs_url=None,
+    redoc_url=None,
 )
 
 logging.info("Initializing Routes...")
@@ -39,7 +39,7 @@ logging.info("Initializing Routes...")
 if settings.all_cors_origin:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.all_cors_origins,
+        allow_origins=settings.all_cors_origin,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
