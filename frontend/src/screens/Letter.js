@@ -14,9 +14,6 @@ import { uploadAudio } from '../services/api.services';
 
 
 const Letter = () => {
-<<<<<<< HEAD:frontend/screens/Letter.js
-    // const ButtonComponent = Platform.OS === 'android' ? TouchableNativeFeedback : TouchableOpacity;
-=======
     const { playSound, isPlaying, setIsPlaying, sound, setSound, cacheAudio, audioCache } = useAudio();
     // TODO: switch current logic to use the useRecording hook
     // const { recording, startRecording, stopRecording } = useRecording();
@@ -33,7 +30,6 @@ const Letter = () => {
     //         await startRecording();
     //     }
     // }
->>>>>>> refactor:frontend/src/screens/Letter.js
 
     const [permissionResponse, requestPermission] = Audio.usePermissions();
     const refCorrect = useRef(null);
@@ -68,12 +64,6 @@ const Letter = () => {
     ]);
 
 
-<<<<<<< HEAD:frontend/screens/Letter.js
-    const SERVER_PATH_UPLOAD = 'uploads';
-    const SERVER_IP = Constants.expoConfig.extra.serverIp;
-    // const SERVER_PORT = Constants.expoConfig.extra.serverPort;
-=======
->>>>>>> refactor:frontend/src/screens/Letter.js
 
     const fadeInCorrect = () => {
         fadeAnimWrong.setValue(0.5);
@@ -202,108 +192,6 @@ const Letter = () => {
     }, [sound]);
 
 
-<<<<<<< HEAD:frontend/screens/Letter.js
-    const letters = [
-        {
-            char: "س",
-            audioFiles: [
-                require("../assets/audio/siin.mp3"),
-                "../uploads/siinOut.wav",
-                require("../assets/audio/siin.mp3"),
-            ],
-        },
-
-        {
-            char: "ش",
-            audioFiles: [
-                require("../assets/audio/shiin.mp3"),
-                "../uploads/shiinOut.wav",
-                require("../assets/audio/shiin.mp3"),
-            ],
-        },
-
-        {
-            char: "ر",
-            audioFiles: [
-                require("../assets/audio/ra.mp3"),
-                "../uploads/raOut.wav",
-                require("../assets/audio/ra.mp3"),
-            ],
-        },
-
-        {
-            char: "ك",
-            audioFiles: [
-                require("../assets/audio/kaf.mp3"),
-                "../uploads/kafOut.wav",
-                require("../assets/audio/kaf.mp3"),
-            ],
-        },
-    ];
-    const playSound = async (audioFile) => {
-        if (recording) {
-            console.log("WAIT DUMBASS YOU STILL RECORDING");
-            return;
-        }
-
-        // audio mode to speaker output BEFORE playing
-        await Audio.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            playsInSilentModeIOS: true,
-            shouldDuckAndroid: true,
-            playThroughEarpieceAndroid: false,
-            staysActiveInBackground: true,
-        });
-
-        if (!audioFile) {
-            recFirst.current.play()
-            return
-        }
-        console.log("PLAY")
-        const cachedAudio = audioCache[audioFile] || await AsyncStorage.getItem(audioFile) || audioFile;
-        console.log(cachedAudio);
-        if (!cachedAudio) {
-            throw new Error('Audio file not found in cache');
-        }
-
-
-        // Pause or resume the currently playing sound
-        if (sound) {
-            const status = await sound.getStatusAsync();
-            if (status.isPlaying) {
-                await sound.pauseAsync();
-                setIsPlaying(false);
-            } else {
-                await sound.playAsync();
-                setIsPlaying(true);
-            }
-        } else {
-            // Load and play a new sound
-            console.log("Audio file:", audioFile);
-
-            const soundObject =
-                typeof cachedAudio === "string" ? { uri: cachedAudio } : cachedAudio;
-
-            const { sound: newSound } = await Audio.Sound.createAsync(soundObject, {
-                shouldPlay: true,
-            });
-
-            setSound(newSound);
-            setIsPlaying(true);
-
-            // Listen to the playback status to reset `isPlaying` when the sound finishes
-            newSound.setOnPlaybackStatusUpdate((status) => {
-                if (status.didJustFinish) {
-                    setIsPlaying(false);
-                    setSound(null); // Unload the sound
-                }
-            });
-        }
-
-    };
-
-=======
->>>>>>> refactor:frontend/src/screens/Letter.js
 
 
     const handleLetterPress = (letter) => {
@@ -359,33 +247,7 @@ const Letter = () => {
         }
     }
 
-<<<<<<< HEAD:frontend/screens/Letter.js
-    const validateServerConfig = () => {
-        if (!SERVER_IP) {
-            throw new Error('Server IP address not set');
-        }
-
-        // if (!SERVER_PORT) {
-        //     throw new Error('Server Port not set');
-        // }
-
-        if (!SERVER_PATH_UPLOAD) {
-            throw new Error('Server Upload Record Path not set');
-        }
-    }
     const uploadRecording = async (uri, audioFile) => {
-        console.log("HERE");
-        console.log(audioCache);
-        validateServerConfig();
-        // const apiUrl = `http://${SERVER_IP}:${SERVER_PORT}/${SERVER_PATH_UPLOAD}`;
-        // const apiUrl = `http://${SERVER_IP}/${SERVER_PATH_UPLOAD}`;
-        const apiUrl = `${SERVER_IP}/${SERVER_PATH_UPLOAD}`;
-
-        console.log(`Uploading to: ${apiUrl}`);
-
-=======
-    const uploadRecording = async (uri, audioFile) => {
->>>>>>> refactor:frontend/src/screens/Letter.js
         const formData = new FormData();
         formData.append('recording', {
             uri: uri,

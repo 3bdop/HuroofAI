@@ -21,13 +21,8 @@ export default {
         },
         android: {
             adaptiveIcon: {
-<<<<<<< HEAD:app.config.js
-                foregroundImage: "./frontend/assets/images/adaptive-icon.png",
-                backgroundColor: "#7600bc",
-=======
                 foregroundImage: "./assets/images/adaptive-icon.png",
                 backgroundColor: "#ffffff",
->>>>>>> refactor:frontend/app.config.js
             },
         },
         web: {
