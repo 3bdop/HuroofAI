@@ -70,7 +70,7 @@ const Home = ({ navigation }) => {
                     containerStyle={{
                         width: ScreenWidth * 0.75,
                     }}
-                    onPress={() => [navigation.navigate("Login"),
+                    onPress={() => [navigation.navigate("Letter"),
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium
                     )]}
                 />
