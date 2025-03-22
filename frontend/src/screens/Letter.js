@@ -336,7 +336,12 @@ const Letter = () => {
                         </View>
                     ))}
                 </ScrollView>
-                <View style={{ justifyContent: 'center', alignItems: 'center', }}>
+                <View style={{
+                    // flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'blue'
+                }}>
 
                     <Animated.View style={{
                         opacity: fadeAnimCorrect,
@@ -355,10 +360,6 @@ const Letter = () => {
                             style={styles.lottieF}
                             resizeMode='cover'
                         />
-                        {flag === "med" && (
-                            <Text style={styles.almostCorrectText}>صحيح تقريبا
-                            </Text>
-                        )}
                     </Animated.View>
                 </View>
                 <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -428,7 +429,14 @@ const Letter = () => {
                         ))}
                     </View>
                 </ScrollView>
-
+                <View style={{ height: ScreenHeight * 0.15 }}>
+                    <Animated.View style={{ opacity: fadeAnimCorrect, }}>
+                        {flag === "med" && (
+                            <Text style={styles.almostCorrectText}>صحيح تقريبا
+                            </Text>
+                        )}
+                    </Animated.View>
+                </View>
             </LinearGradient>
             <LottieView
                 ref={refCorrect}
@@ -438,7 +446,7 @@ const Letter = () => {
                 resizeMode='cover'
             />
 
-        </View>
+        </View >
     );
 };
 
