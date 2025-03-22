@@ -1,23 +1,9 @@
 import Constants from 'expo-constants';
 
-const ENV = {
-    dev: {
-        API_URL: `http://${Constants.expoConfig.extra.serverIp}:${Constants.expoConfig.extra.serverPort}`,
-    },
-    prod: {
-        API_URL: 'https://sit.udst.edu.qa/huroof',
-    },
-};
-
-const getEnvironment = () => {
-    if (!Constants.expoConfig.extra.serverIp && __DEV__) {
-        throw new Error('Server IP is not configured in development environment');
-    }
-    return __DEV__ ? ENV.dev : ENV.prod;
-};
+const PRODUCTION_URL = 'https://sit.udst.edu.qa/huroof';
 
 export const API_CONFIG = {
-    ...getEnvironment(),
+    API_URL: PRODUCTION_URL, // <-- Direct assignment
     ENDPOINTS: {
         UPLOAD: '/upload/',
         INFERENCE: '/infer/',

@@ -9,32 +9,45 @@ export default {
         userInterfaceStyle: "light",
         newArchEnabled: true,
         splash: {
-            image: "./assets/images/logo.png",
+            image: "./assets/images/splash.png",
             resizeMode: "contain",
-            backgroundColor: "#7600bc",
         },
         assetBundlePatterns: [
             "**/*",
         ],
         ios: {
             supportsTablet: true,
+            bundleIdentifier: "com.udst.huroof",
+            "infoPlist": {
+                "ITSAppUsesNonExemptEncryption": false
+            }
         },
         android: {
             adaptiveIcon: {
                 foregroundImage: "./assets/images/adaptive-icon.png",
-                backgroundColor: "#ffffff",
+                backgroundColor: "#E2E2E2FF",
             },
         },
         web: {
             favicon: "./assets/images/favicon.png",
         },
         extra: {
-
-            serverIp: process.env.SERVER_IP,
-            serverPort: process.env.SERVER_PORT,
+            "router": {
+                "origin": false
+            },
+            "eas": {
+                "projectId": "bfbec87f-58e3-41a4-805a-6d05b18d5815"
+            },
+            "owner": "3bdop",
         },
         plugins: [
             "expo-build-properties",
         ],
+        "updates": {
+            "url": "https://u.expo.dev/bfbec87f-58e3-41a4-805a-6d05b18d5815"
+        },
+        "runtimeVersion": {
+            "policy": "appVersion"
+        }
     },
 };
