@@ -18,9 +18,11 @@ export default {
         ios: {
             supportsTablet: true,
             bundleIdentifier: "com.udst.huroof",
-            "infoPlist": {
-                "ITSAppUsesNonExemptEncryption": false
-            }
+            infoPlist: {
+                ITSAppUsesNonExemptEncryption: false,
+                NSMicrophoneUsageDescription: "This app needs microphone access to record your pronunciation",
+            },
+
         },
         android: {
             adaptiveIcon: {
@@ -32,22 +34,21 @@ export default {
             favicon: "./assets/images/favicon.png",
         },
         extra: {
-            "router": {
-                "origin": false
+            router: {
+                origin: false
             },
-            "eas": {
+            eas: {
                 "projectId": "bfbec87f-58e3-41a4-805a-6d05b18d5815"
             },
-            "owner": "3bdop",
         },
         plugins: [
             "expo-build-properties",
         ],
-        "updates": {
-            "url": "https://u.expo.dev/bfbec87f-58e3-41a4-805a-6d05b18d5815"
+        updates: {
+            url: "https://u.expo.dev/bfbec87f-58e3-41a4-805a-6d05b18d5815"
         },
-        "runtimeVersion": {
-            "policy": "appVersion"
+        runtimeVersion: {
+            policy: "appVersion"
         }
     },
 };

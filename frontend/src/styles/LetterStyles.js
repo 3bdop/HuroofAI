@@ -9,7 +9,6 @@ const styles = StyleSheet.create({
         // alignItems: 'center'
     },
     almostCorrectText: {
-        // backgroundColor: 'red',
         color: 'snow',
         fontSize: 30,
         fontWeight: 'bold',
@@ -20,7 +19,7 @@ const styles = StyleSheet.create({
             width: 0,
             height: 2,
         },
-        shadowOpacity: 0.25,
+        shadowOpacity: 0.85,
         shadowRadius: 3.84,
     },
     gradient: {

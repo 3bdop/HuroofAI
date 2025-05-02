@@ -15,21 +15,6 @@ import { uploadAudio } from '../services/api.services';
 
 const Letter = () => {
     const { playSound, isPlaying, setIsPlaying, sound, setSound, cacheAudio, audioCache } = useAudio();
-    // TODO: switch current logic to use the useRecording hook
-    // const { recording, startRecording, stopRecording } = useRecording();
-
-    // const handleRecordPress = async () => {
-    //     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
-    //     if (recording) {
-    //         const uri = await stopRecording();
-
-    //         if (uri) {
-    //             await uploadRecording(uri, activeLetter);
-    //         }
-    //     } else {
-    //         await startRecording();
-    //     }
-    // }
 
     const [permissionResponse, requestPermission] = Audio.usePermissions();
     const refCorrect = useRef(null);
@@ -270,15 +255,6 @@ const Letter = () => {
                 isCorrect ? answerAlert(true) : answerAlert(false)
                 setFlag(false)
             }
-            // if (confidence < 50) {
-            //     setFlag(false)
-            //     answerAlert(false);
-            // } else if (confidence >= 50 && confidence <= 74) {
-            //     setFlag("med")
-            //     answerAlert("med");
-            // } else if (confidence >= 75) {
-            //     answerAlert(true);
-            // }
             return result;
 
         } catch (error) {
@@ -428,15 +404,13 @@ const Letter = () => {
                             </View>
                         ))}
                     </View>
-                </ScrollView>
-                <View style={{ height: ScreenHeight * 0.15 }}>
                     <Animated.View style={{ opacity: fadeAnimCorrect, }}>
                         {flag === "med" && (
-                            <Text style={styles.almostCorrectText}>صحيح تقريبا
+                            <Text style={styles.almostCorrectText}>صحيح تقريباً
                             </Text>
                         )}
                     </Animated.View>
-                </View>
+                </ScrollView>
             </LinearGradient>
             <LottieView
                 ref={refCorrect}
@@ -445,8 +419,7 @@ const Letter = () => {
                 loop={false}
                 resizeMode='cover'
             />
-
-        </View >
+        </View>
     );
 };
 
