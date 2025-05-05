@@ -21,7 +21,6 @@ const Analytics = ({ navigation }) => {
   const [statsData, setStatsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  console.log("statttts: " + JSON.stringify(statsData))
 
   useEffect(() => {
     // Get current user
