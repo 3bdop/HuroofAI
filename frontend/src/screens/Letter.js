@@ -6,30 +6,16 @@ import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
 import * as Haptics from 'expo-haptics';
 import styles from '../styles/LetterStyles';
-import { LETTERS } from "@config/constants"
+import { LETTERS, LETTERS2 } from "@config/constants"
 import { useAudio } from "@hooks/useAudio"
 // import { useRecording } from "@hooks/useRecording"
 
 import { uploadAudio } from '../services/api.services';
+import { db, auth } from './config';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
-
-const Letter = () => {
+const Letter = ({ navigation }) => {
     const { playSound, isPlaying, setIsPlaying, sound, setSound, cacheAudio, audioCache } = useAudio();
-    // TODO: switch current logic to use the useRecording hook
-    // const { recording, startRecording, stopRecording } = useRecording();
-
-    // const handleRecordPress = async () => {
-    //     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
-    //     if (recording) {
-    //         const uri = await stopRecording();
-
-    //         if (uri) {
-    //             await uploadRecording(uri, activeLetter);
-    //         }
-    //     } else {
-    //         await startRecording();
-    //     }
-    // }
 
     const [permissionResponse, requestPermission] = Audio.usePermissions();
     const refCorrect = useRef(null);
@@ -40,7 +26,9 @@ const Letter = () => {
     const [recording, setRecording] = useState(null);
     const fadeAnimCorrect = useRef(new Animated.Value(0)).current; // Initial opacity value
     const fadeAnimWrong = useRef(new Animated.Value(0)).current; // Initial opacity value\
-    const [flag, setFlag] = useState(null)
+    const [flag, setFlag] = useState(null);
+    const [currentUser, setCurrentUser] = useState(null);
+    const [userDocId, setUserDocId] = useState(null);
 
     const { width: ScreenWidth, height: ScreenHeight } = Dimensions.get('window');
 
@@ -63,7 +51,109 @@ const Letter = () => {
         }
     ]);
 
+    // Firebase user setup
+    useEffect(() => {
+        const user = auth.currentUser;
+        if (user) {
+            setCurrentUser(user);
+            setupUserInFirestore(user);
+        }
+    }, []);
 
+    const setupUserInFirestore = async (user) => {
+        try {
+            // Check if user exists in Firestore
+            const usersCollection = collection(db, "users");
+            const q = query(usersCollection, where("email", "==", user.email));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                // Create a new user document if it doesn't exist
+                const userRef = doc(db, "users", user.uid);
+                await setDoc(userRef, {
+                    email: user.email,
+                    uid: user.uid,
+                    letterStats: initializeLetterStats(),
+                    createdAt: new Date()
+                });
+                setUserDocId(user.uid);
+            } else {
+                // User exists, get the document ID
+                setUserDocId(querySnapshot.docs[0].id);
+
+                // Check if letterStats exists, if not, initialize it
+                const userData = querySnapshot.docs[0].data();
+                if (!userData.letterStats) {
+                    const userRef = doc(db, "users", querySnapshot.docs[0].id);
+                    await updateDoc(userRef, {
+                        letterStats: initializeLetterStats()
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Error setting up user in Firestore:", error);
+        }
+    };
+
+    const initializeLetterStats = () => {
+        const stats = {};
+        LETTERS2.forEach(letter => {
+            stats[letter.char] = {
+                totalTrials: 0,
+                correct: 0,
+                wrong: 0,
+                lastThreeTrials: []
+            };
+        });
+        return stats;
+    };
+
+    // Update stats in Firestore after a trial
+    const updateLetterStats = async (letterChar, isCorrect) => {
+        if (!currentUser || !userDocId) return;
+
+        try {
+            // Get current user data
+            const userRef = doc(db, "users", userDocId);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                const letterStats = userData.letterStats || initializeLetterStats();
+
+                // Update the stats for this letter
+                if (!letterStats[letterChar]) {
+                    letterStats[letterChar] = {
+                        totalTrials: 0,
+                        correct: 0,
+                        wrong: 0,
+                        lastThreeTrials: []
+                    };
+                }
+
+                letterStats[letterChar].totalTrials += 1;
+
+                if (isCorrect) {
+                    letterStats[letterChar].correct += 1;
+                } else {
+                    letterStats[letterChar].wrong += 1;
+                }
+
+                // Keep track of last three trials
+                letterStats[letterChar].lastThreeTrials.push(isCorrect);
+                if (letterStats[letterChar].lastThreeTrials.length > 3) {
+                    letterStats[letterChar].lastThreeTrials.shift(); // Remove oldest trial if more than 3
+                }
+
+                // Update Firestore
+                await updateDoc(userRef, {
+                    letterStats: letterStats
+                });
+            }
+        } catch (error) {
+            console.error("Error updating letter stats:", error);
+        }
+    };
 
     const fadeInCorrect = () => {
         fadeAnimWrong.setValue(0.5);
@@ -124,6 +214,7 @@ const Letter = () => {
             useNativeDriver: true, // Use native driver for better performance
         }).start();
     };
+
     const fadeOutWrong = () => {
         Animated.timing(fadeAnimCorrect, {
             toValue: 0, // Fade out to fully transparent
@@ -131,6 +222,7 @@ const Letter = () => {
             useNativeDriver: true, // Use native driver for better performance
         }).start();
     };
+
     const fadeOutMed = () => {
         Animated.timing(fadeAnimCorrect, {
             toValue: 0, // Fade out to fully transparent
@@ -153,13 +245,16 @@ const Letter = () => {
         fadeInMed()
     }
 
-    const answerAlert = (value) => {
+    const answerAlert = (value, letterChar) => {
         console.log(value);
         if (value === "med") {
-            answerMed()
+            answerMed();
+            // For medium confidence, record as correct with a warning
+            updateLetterStats(letterChar, true);
         }
         else {
             value ? answerCorrect() : answerWrong();
+            updateLetterStats(letterChar, value);
         }
     }
 
@@ -191,13 +286,9 @@ const Letter = () => {
             : undefined;
     }, [sound]);
 
-
-
-
     const handleLetterPress = (letter) => {
         setActiveLetter(activeLetter === letter.char ? null : letter.char);
     };
-
 
     const correct = {
         "siinOut.wav": "سين",
@@ -261,31 +352,23 @@ const Letter = () => {
             console.log('Response: ', result);
 
             const isCorrect = result.inference_result.is_correct;
-            const confidence = result.inference_result.confidence
+            const confidence = result.inference_result.confidence;
+            const letterChar = correct[audioFile]; // Get the current letter character
+
             if (confidence > 49 && confidence < 75) {
-                setFlag("med")
-                answerAlert("med")
+                setFlag("med");
+                answerAlert("med", letterChar);
             }
             else {
-                isCorrect ? answerAlert(true) : answerAlert(false)
-                setFlag(false)
+                isCorrect ? answerAlert(true, letterChar) : answerAlert(false, letterChar);
+                setFlag(false);
             }
-            // if (confidence < 50) {
-            //     setFlag(false)
-            //     answerAlert(false);
-            // } else if (confidence >= 50 && confidence <= 74) {
-            //     setFlag("med")
-            //     answerAlert("med");
-            // } else if (confidence >= 75) {
-            //     answerAlert(true);
-            // }
             return result;
 
         } catch (error) {
             console.error('Error:', error);
         }
     };
-
 
     const stopRecording = async (audioFile) => {
         try {
@@ -300,7 +383,7 @@ const Letter = () => {
             console.log(`Caching ${audioFile}: ${audioCache[audioFile]} from stopRecording...`);
             console.log(audioFile);
             await cacheAudio(audioFile, uri);
-            await cacheAudio
+            await cacheAudio;
             console.log(uri);
             console.log(audioCache);
             await uploadRecording(uri, baseName);
@@ -312,6 +395,20 @@ const Letter = () => {
         }
     };
 
+    // Navigate to Analytics
+    const navigateToAnalytics = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        navigation.navigate('Analytics');
+    };
+
+    // Handle logout
+    const handleLogout = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        auth.signOut()
+            .then(() => navigation.replace('Home'))
+            .catch(error => console.error("Error signing out: ", error));
+    };
+
     return (
         <View style={styles.container}>
             <LinearGradient
@@ -320,6 +417,16 @@ const Letter = () => {
                 end={{ x: 0, y: 1 }}
                 style={styles.gradient}>
 
+                {/* Add logout button in top left */}
+                <View style={headerStyles.container}>
+                    <TouchableOpacity
+                        style={headerStyles.logoutButton}
+                        onPress={handleLogout}
+                    >
+                        <Icon name="log-out-outline" size={24} color="#FFFFFF" />
+                        <Text style={headerStyles.buttonText}>Logout</Text>
+                    </TouchableOpacity>
+                </View>
 
                 <ScrollView
                     horizontal
@@ -336,7 +443,12 @@ const Letter = () => {
                         </View>
                     ))}
                 </ScrollView>
-                <View style={{ justifyContent: 'center', alignItems: 'center', }}>
+                <View style={{
+                    // flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'blue'
+                }}>
 
                     <Animated.View style={{
                         opacity: fadeAnimCorrect,
@@ -355,10 +467,6 @@ const Letter = () => {
                             style={styles.lottieF}
                             resizeMode='cover'
                         />
-                        {flag === "med" && (
-                            <Text style={styles.almostCorrectText}>صحيح تقريبا
-                            </Text>
-                        )}
                     </Animated.View>
                 </View>
                 <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -427,8 +535,24 @@ const Letter = () => {
                             </View>
                         ))}
                     </View>
-                </ScrollView>
+                    <Animated.View style={{ opacity: fadeAnimCorrect, }}>
+                        {flag === "med" && (
+                            <Text style={styles.almostCorrectText}>صحيح تقريباً
+                            </Text>
+                        )}
+                    </Animated.View>
 
+                    {/* Add analytics button at bottom */}
+                    <View style={footerStyles.container}>
+                        <TouchableOpacity
+                            style={footerStyles.analyticsButton}
+                            onPress={navigateToAnalytics}
+                        >
+                            <Icon name="stats-chart" size={24} color="#FFFFFF" />
+                            <Text style={footerStyles.buttonText}>View Analytics</Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
             </LinearGradient>
             <LottieView
                 ref={refCorrect}
@@ -437,10 +561,69 @@ const Letter = () => {
                 loop={false}
                 resizeMode='cover'
             />
-
         </View>
     );
 };
 
+// Additional styles for header and footer
+const headerStyles = {
+    container: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingTop: 40,
+        paddingBottom: 10,
+    },
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginTop: 22,
+        borderRadius: 20,
+    },
+    buttonText: {
+        color: '#FFFFFF',
+        marginLeft: 8,
+        fontSize: 14,
+        fontWeight: '500',
+    }
+};
+
+const footerStyles = {
+    container: {
+        width: '100%',
+        alignItems: 'center',
+        marginTop: 20,
+        marginBottom: 30,
+        paddingHorizontal: 20,
+    },
+    analyticsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#472C74',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 25,
+        width: '80%',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 4,
+    },
+    buttonText: {
+        color: '#FFFFFF',
+        marginLeft: 10,
+        fontSize: 16,
+        fontWeight: 'bold',
+    }
+};
 
 export default Letter;

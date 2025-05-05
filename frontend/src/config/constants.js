@@ -30,6 +30,36 @@ export const LETTERS = [
         },
     },
 ];
+export const LETTERS2 = [
+    {
+        char: "سين",
+        audioFiles: {
+            original: require("@assets/audio/siin.mp3"),
+            recorded: "siinOut.wav"
+        },
+    },
+    {
+        char: "شين",
+        audioFiles: {
+            original: require("@assets/audio/shiin.mp3"),
+            recorded: "shiinOut.wav"
+        },
+    },
+    {
+        char: "را",
+        audioFiles: {
+            original: require("@assets/audio/ra.mp3"),
+            recorded: "raOut.wav",
+        },
+    },
+    {
+        char: "كاف",
+        audioFiles: {
+            original: require("@assets/audio/kaf.mp3"),
+            recorded: "kafOut.wav",
+        },
+    },
+];
 
 export const AUDIO_CONFIG = {
     mode: {

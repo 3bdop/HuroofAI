@@ -9,11 +9,7 @@ const styles = StyleSheet.create({
         // alignItems: 'center'
     },
     almostCorrectText: {
-        position: 'absolute',
-        top: '200%',
-        left: '35%',
-        transform: [{ translateX: -50 }, { translateY: -50 }],
-        color: '#97A8FCFF',
+        color: 'snow',
         fontSize: 30,
         fontWeight: 'bold',
         textAlign: 'center',
@@ -23,9 +19,8 @@ const styles = StyleSheet.create({
             width: 0,
             height: 2,
         },
-        shadowOpacity: 0.25,
+        shadowOpacity: 0.85,
         shadowRadius: 3.84,
-
     },
     gradient: {
         flex: 1,
