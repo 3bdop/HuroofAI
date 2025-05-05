@@ -6,7 +6,7 @@ import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
 import * as Haptics from 'expo-haptics';
 import styles from '../styles/LetterStyles';
-import { LETTERS } from "@config/constants"
+import { LETTERS, LETTERS2 } from "@config/constants"
 import { useAudio } from "@hooks/useAudio"
 // import { useRecording } from "@hooks/useRecording"
 
@@ -66,7 +66,7 @@ const Letter = ({ navigation }) => {
             const usersCollection = collection(db, "users");
             const q = query(usersCollection, where("email", "==", user.email));
             const querySnapshot = await getDocs(q);
-            
+
             if (querySnapshot.empty) {
                 // Create a new user document if it doesn't exist
                 const userRef = doc(db, "users", user.uid);
@@ -80,7 +80,7 @@ const Letter = ({ navigation }) => {
             } else {
                 // User exists, get the document ID
                 setUserDocId(querySnapshot.docs[0].id);
-                
+
                 // Check if letterStats exists, if not, initialize it
                 const userData = querySnapshot.docs[0].data();
                 if (!userData.letterStats) {
@@ -97,7 +97,7 @@ const Letter = ({ navigation }) => {
 
     const initializeLetterStats = () => {
         const stats = {};
-        LETTERS.forEach(letter => {
+        LETTERS2.forEach(letter => {
             stats[letter.char] = {
                 totalTrials: 0,
                 correct: 0,
@@ -111,16 +111,16 @@ const Letter = ({ navigation }) => {
     // Update stats in Firestore after a trial
     const updateLetterStats = async (letterChar, isCorrect) => {
         if (!currentUser || !userDocId) return;
-        
+
         try {
             // Get current user data
             const userRef = doc(db, "users", userDocId);
             const userSnap = await getDoc(userRef);
-            
+
             if (userSnap.exists()) {
                 const userData = userSnap.data();
                 const letterStats = userData.letterStats || initializeLetterStats();
-                
+
                 // Update the stats for this letter
                 if (!letterStats[letterChar]) {
                     letterStats[letterChar] = {
@@ -130,21 +130,21 @@ const Letter = ({ navigation }) => {
                         lastThreeTrials: []
                     };
                 }
-                
+
                 letterStats[letterChar].totalTrials += 1;
-                
+
                 if (isCorrect) {
                     letterStats[letterChar].correct += 1;
                 } else {
                     letterStats[letterChar].wrong += 1;
                 }
-                
+
                 // Keep track of last three trials
                 letterStats[letterChar].lastThreeTrials.push(isCorrect);
                 if (letterStats[letterChar].lastThreeTrials.length > 3) {
                     letterStats[letterChar].lastThreeTrials.shift(); // Remove oldest trial if more than 3
                 }
-                
+
                 // Update Firestore
                 await updateDoc(userRef, {
                     letterStats: letterStats
@@ -214,7 +214,7 @@ const Letter = ({ navigation }) => {
             useNativeDriver: true, // Use native driver for better performance
         }).start();
     };
-    
+
     const fadeOutWrong = () => {
         Animated.timing(fadeAnimCorrect, {
             toValue: 0, // Fade out to fully transparent
@@ -222,7 +222,7 @@ const Letter = ({ navigation }) => {
             useNativeDriver: true, // Use native driver for better performance
         }).start();
     };
-    
+
     const fadeOutMed = () => {
         Animated.timing(fadeAnimCorrect, {
             toValue: 0, // Fade out to fully transparent
@@ -354,7 +354,7 @@ const Letter = ({ navigation }) => {
             const isCorrect = result.inference_result.is_correct;
             const confidence = result.inference_result.confidence;
             const letterChar = correct[audioFile]; // Get the current letter character
-            
+
             if (confidence > 49 && confidence < 75) {
                 setFlag("med");
                 answerAlert("med", letterChar);
@@ -405,7 +405,7 @@ const Letter = ({ navigation }) => {
     const handleLogout = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         auth.signOut()
-            .then(() => navigation.replace('Login'))
+            .then(() => navigation.replace('Home'))
             .catch(error => console.error("Error signing out: ", error));
     };
 
@@ -419,8 +419,8 @@ const Letter = ({ navigation }) => {
 
                 {/* Add logout button in top left */}
                 <View style={headerStyles.container}>
-                    <TouchableOpacity 
-                        style={headerStyles.logoutButton} 
+                    <TouchableOpacity
+                        style={headerStyles.logoutButton}
                         onPress={handleLogout}
                     >
                         <Icon name="log-out-outline" size={24} color="#FFFFFF" />
