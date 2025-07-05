@@ -1,4 +1,4 @@
-# Huroof app 📚🎉
+# Huroof AI 📚🎉
 
 Welcome to the Huroof app! This project is designed to help you learn some of the hardest Arabic alphabet letters in a fun and interactive way using machine learning features. The app focuses on the following letters:
 **س**،
